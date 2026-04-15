@@ -3,6 +3,7 @@
   "version": 2,
   "name": "tarot-app",
   "public": true,
+  "outputDirectory": ".",
   "routes": [
     {
       "src": "/",

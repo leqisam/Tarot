@@ -10,6 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
     <!-- 公共样式 -->
     <link rel="stylesheet" href="./assets/css/common.css">
+    <!-- 塔罗数据 -->
+    <script src="./assets/js/tarot-data.js"></script>
+    <!-- AI解读服务 -->
+    <script src="./assets/js/ai-interpretation.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -34,7 +38,8 @@
                         'pulse-slow': 'pulse 3s ease-in-out infinite',
                         'shake': 'shake 0.5s ease-in-out',
                         'flip': 'flip 1s ease-in-out forwards',
-                        'deal': 'deal 0.8s ease-out forwards'
+                        'deal': 'deal 0.8s ease-out forwards',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards'
                     },
                     keyframes: {
                         shake: {
@@ -50,6 +55,10 @@
                             '0%': { transform: 'translateY(-100px) scale(0.5)', opacity: '0' },
                             '50%': { transform: 'translateY(20px) scale(1.1)', opacity: '1' },
                             '100%': { transform: 'translateY(0) scale(1)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
                         }
                     }
                 }
@@ -91,6 +100,20 @@
             border-color: #d4af37;
         }
         
+        /* 牌阵选择卡片 */
+        .spread-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .spread-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+        .spread-card.selected {
+            border-color: #d4af37;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+        
         /* 洗牌动画 */
         @keyframes shuffleCard {
             0% { transform: translateX(0) rotate(0deg); }
@@ -111,7 +134,7 @@
             transition: max-height 0.5s ease;
         }
         .result-card.expanded {
-            max-height: 500px;
+            max-height: 800px;
         }
         
         /* 卡牌堆叠效果 */
@@ -131,6 +154,88 @@
         .card-stack .tarot-card:nth-child(1) { transform: rotate(-2deg) translateX(-2px); }
         .card-stack .tarot-card:nth-child(2) { transform: rotate(1deg) translateX(1px); }
         .card-stack .tarot-card:nth-child(3) { transform: rotate(-1deg) translateX(-1px); }
+        
+        /* 牌阵布局 */
+        .spread-layout {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .spread-position {
+            text-align: center;
+        }
+        
+        .position-label {
+            font-size: 12px;
+            color: #d4af37;
+            margin-top: 8px;
+        }
+        
+        /* AI解读加载动画 */
+        .ai-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .ai-loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #d4af37;
+            border-radius: 50%;
+            animation: aiLoading 1.4s ease-in-out infinite;
+        }
+        
+        .ai-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .ai-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes aiLoading {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Markdown样式 */
+        .ai-interpretation h3 {
+            color: #d4af37;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+        
+        .ai-interpretation p {
+            color: #d1d5db;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        
+        .ai-interpretation strong {
+            color: #f4d03f;
+        }
+        
+        /* 凯尔特十字特殊布局 */
+        .celtic-cross-layout {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .celtic-cross-layout .position-1 { grid-column: 2; grid-row: 2; }
+        .celtic-cross-layout .position-2 { grid-column: 2; grid-row: 2; transform: rotate(90deg); z-index: 1; }
+        .celtic-cross-layout .position-3 { grid-column: 2; grid-row: 1; }
+        .celtic-cross-layout .position-4 { grid-column: 2; grid-row: 3; }
+        .celtic-cross-layout .position-5 { grid-column: 1; grid-row: 2; }
+        .celtic-cross-layout .position-6 { grid-column: 3; grid-row: 2; }
+        .celtic-cross-layout .position-7 { grid-column: 4; grid-row: 4; }
+        .celtic-cross-layout .position-8 { grid-column: 5; grid-row: 4; }
+        .celtic-cross-layout .position-9 { grid-column: 6; grid-row: 4; }
+        .celtic-cross-layout .position-10 { grid-column: 6; grid-row: 4; }
     </style>
 </head>
 <body class="bg-tarot-dark text-white font-serif min-h-screen">
@@ -185,12 +290,17 @@
                 <div class="w-8 h-px bg-tarot-gold/30"></div>
                 <div class="step-indicator">
                     <div class="step-dot" id="step2-dot"></div>
-                    <span class="text-sm text-gray-400" id="step2-text">抽卡</span>
+                    <span class="text-sm text-gray-400" id="step2-text">牌阵</span>
                 </div>
                 <div class="w-8 h-px bg-tarot-gold/30"></div>
                 <div class="step-indicator">
                     <div class="step-dot" id="step3-dot"></div>
-                    <span class="text-sm text-gray-400" id="step3-text">解读</span>
+                    <span class="text-sm text-gray-400" id="step3-text">抽卡</span>
+                </div>
+                <div class="w-8 h-px bg-tarot-gold/30"></div>
+                <div class="step-indicator">
+                    <div class="step-dot" id="step4-dot"></div>
+                    <span class="text-sm text-gray-400" id="step4-text">解读</span>
                 </div>
             </div>
         </div>
@@ -248,8 +358,40 @@
             </div>
         </section>
 
-        <!-- 步骤2：抽卡过程 -->
+        <!-- 步骤2：牌阵选择 -->
         <section id="step2" class="hidden min-h-screen flex items-center justify-center px-4 pt-20">
+            <div class="max-w-4xl w-full">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-tarot-gold mb-4">
+                        选择牌阵
+                    </h2>
+                    <p class="text-gray-400">
+                        不同的牌阵适合不同类型的问题
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="spreadGrid">
+                    <!-- 牌阵卡片将通过JS动态生成 -->
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button onclick="goBackToStep1()" class="px-6 py-3 border-2 border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all">
+                        上一步
+                    </button>
+                    <button 
+                        id="startDrawBtn" 
+                        onclick="goToStep3()"
+                        class="px-8 py-3 bg-gradient-to-r from-tarot-gold to-tarot-goldDark text-tarot-dark font-bold rounded-full shadow-lg shadow-tarot-gold/30 hover:shadow-tarot-gold/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        开始抽卡
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 步骤3：抽卡过程 -->
+        <section id="step3" class="hidden min-h-screen flex items-center justify-center px-4 pt-20">
             <div class="max-w-4xl w-full text-center">
                 <!-- 准备阶段 -->
                 <div id="preparePhase" class="py-20">
@@ -324,31 +466,24 @@
                     </div>
                     <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4">正在抽卡...</h3>
                     <p class="text-gray-400">命运之轮正在转动</p>
+                    <p class="text-tarot-gold mt-4" id="drawProgress">0 / <span id="totalCards">1</span></p>
                 </div>
                 
                 <!-- 翻牌阶段 -->
-                <div id="revealPhase" class="hidden py-20">
-                    <div class="mb-8">
-                        <div id="revealedCard" class="tarot-card mx-auto">
-                            <div class="card-face card-back"></div>
-                            <div class="card-face card-front" id="cardFront">
-                                <div class="text-5xl mb-2" id="cardEmoji">🌙</div>
-                                <div class="text-tarot-gold font-bold text-center" id="cardName">月亮</div>
-                                <div class="text-gray-400 text-sm mt-1" id="cardPosition">正位</div>
-                            </div>
-                        </div>
+                <div id="revealPhase" class="hidden py-10">
+                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-8">牌面揭示</h3>
+                    <div id="revealedCardsContainer" class="spread-layout mb-8">
+                        <!-- 翻开的牌将在这里显示 -->
                     </div>
-                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4" id="revealTitle">月亮 正位</h3>
-                    <p class="text-gray-400 mb-8" id="revealKeyword">幻觉、恐惧、潜意识</p>
-                    <button onclick="goToStep3()" class="px-8 py-4 bg-gradient-to-r from-tarot-gold to-tarot-goldDark text-tarot-dark font-bold rounded-full shadow-lg shadow-tarot-gold/30 hover:shadow-tarot-gold/50 transition-all duration-300 hover:scale-105">
-                        查看解读
+                    <button onclick="goToStep4()" class="px-8 py-4 bg-gradient-to-r from-tarot-gold to-tarot-goldDark text-tarot-dark font-bold rounded-full shadow-lg shadow-tarot-gold/30 hover:shadow-tarot-gold/50 transition-all duration-300 hover:scale-105">
+                        查看AI解读
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- 步骤3：结果展示 -->
-        <section id="step3" class="hidden min-h-screen px-4 pt-24 pb-20">
+        <!-- 步骤4：结果展示 -->
+        <section id="step4" class="hidden min-h-screen px-4 pt-24 pb-20">
             <div class="max-w-4xl mx-auto">
                 <!-- 结果头部 -->
                 <div class="text-center mb-10">
@@ -357,74 +492,44 @@
                     </h2>
                     <div class="glass rounded-xl p-4 inline-block">
                         <p class="text-gray-300 mb-2">你的问题：</p>
-                        <p class="text-white text-lg font-semibold" id="resultQuestion">我和他的关系会走向何方？</p>
-                        <p class="text-gray-500 text-sm mt-2" id="resultTime">2026-04-14 14:30</p>
+                        <p class="text-white text-lg font-semibold" id="resultQuestion"></p>
+                        <p class="text-gray-500 text-sm mt-2" id="resultTime"></p>
+                        <p class="text-tarot-gold text-sm mt-1" id="resultSpread"></p>
                     </div>
                 </div>
                 
                 <!-- 牌面展示 -->
-                <div class="flex justify-center mb-10">
-                    <div id="resultCard" class="tarot-card flipped">
-                        <div class="card-face card-back"></div>
-                        <div class="card-face card-front" id="resultCardFront">
-                            <div class="text-6xl mb-2" id="resultCardEmoji">🌙</div>
-                            <div class="text-tarot-gold font-bold text-lg text-center" id="resultCardName">月亮</div>
-                            <div class="text-gray-400 text-sm mt-1" id="resultCardPosition">正位</div>
-                        </div>
-                    </div>
+                <div id="resultCardsContainer" class="flex flex-wrap justify-center gap-6 mb-10">
+                    <!-- 结果牌面将在这里显示 -->
                 </div>
                 
-                <!-- 整体解读 -->
+                <!-- AI解读 -->
                 <div class="glass rounded-2xl p-6 mb-6">
                     <h3 class="text-xl font-bold text-tarot-gold mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
-                        整体解读
+                        AI智能解读
+                        <span class="text-xs bg-tarot-gold/20 text-tarot-gold px-2 py-1 rounded-full">DeepSeek-V3</span>
                     </h3>
-                    <p class="text-gray-300 leading-relaxed" id="overallReading">
-                        月亮牌正位出现在你的占卜中，象征着潜意识的力量和内心的直觉。这张牌暗示你目前可能正处于一个充满不确定性的阶段，事情并非表面看起来那样简单。
-                    </p>
+                    
+                    <!-- AI解读加载状态 -->
+                    <div id="aiLoading" class="ai-loading py-8">
+                        <div class="ai-loading-dot"></div>
+                        <div class="ai-loading-dot"></div>
+                        <div class="ai-loading-dot"></div>
+                        <span class="text-gray-400 ml-2">AI正在为您生成专业解读...</span>
+                    </div>
+                    
+                    <!-- AI解读内容 -->
+                    <div id="aiInterpretation" class="ai-interpretation hidden">
+                        <!-- AI解读将在这里显示 -->
+                    </div>
                 </div>
                 
                 <!-- 单张牌详情 -->
-                <div class="glass rounded-2xl overflow-hidden mb-6">
-                    <div class="p-4 bg-tarot-purple/30 border-b border-tarot-gold/20 cursor-pointer flex items-center justify-between" onclick="toggleCardDetail()">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl" id="detailEmoji">🌙</span>
-                            <div>
-                                <span class="text-white font-semibold" id="detailCardName">月亮</span>
-                                <span class="text-tarot-gold ml-2" id="detailPosition">正位</span>
-                            </div>
-                        </div>
-                        <svg id="detailArrow" class="w-5 h-5 text-tarot-gold transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </div>
-                    <div id="cardDetailContent" class="result-card">
-                        <div class="p-4 space-y-4">
-                            <div>
-                                <h4 class="text-tarot-gold font-semibold mb-2">关键词</h4>
-                                <div class="flex flex-wrap gap-2" id="keywords">
-                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">幻觉</span>
-                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">恐惧</span>
-                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">潜意识</span>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 class="text-tarot-gold font-semibold mb-2">牌意解读</h4>
-                                <p class="text-gray-300 text-sm leading-relaxed" id="cardMeaning">
-                                    月亮牌代表着潜意识的世界和内心的直觉。它暗示着事情可能不像表面看起来那样清晰，存在着隐藏的真相等待你去发现。
-                                </p>
-                            </div>
-                            <div>
-                                <h4 class="text-tarot-gold font-semibold mb-2">建议指引</h4>
-                                <p class="text-gray-300 text-sm leading-relaxed" id="cardAdvice">
-                                    面对当前的情况，建议你保持冷静和耐心。不要被表面的现象所迷惑，深入探索事情的本质。
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div id="cardDetailsContainer" class="space-y-4 mb-6">
+                    <!-- 每张牌的详情将在这里显示 -->
                 </div>
                 
                 <!-- 操作按钮 -->
@@ -458,20 +563,48 @@
     <script>
         let currentStep = 1;
         let currentQuestion = '';
-        let drawnCard = null;
-        let isReversed = false;
+        let selectedSpread = null;
+        let drawnCards = [];
+        let currentDrawIndex = 0;
         
-        // 检查是否是每日一牌模式
-        function checkDailyCardMode() {
-            const isDaily = localStorage.getItem('dailyCardMode');
-            const dailyQuestion = localStorage.getItem('dailyCardQuestion');
+        // 初始化牌阵选择
+        function initSpreadSelection() {
+            const spreadGrid = document.getElementById('spreadGrid');
+            spreadGrid.innerHTML = '';
             
-            if (isDaily === 'true' && dailyQuestion) {
-                document.getElementById('questionInput').value = dailyQuestion;
-                document.getElementById('charCount').textContent = dailyQuestion.length + '/200字';
-                document.getElementById('nextBtn').disabled = false;
-                localStorage.removeItem('dailyCardMode');
-            }
+            Object.values(tarotSpreads).forEach(spread => {
+                const card = document.createElement('div');
+                card.className = 'spread-card glass rounded-xl p-6 border-2 border-transparent';
+                card.dataset.spreadId = spread.id;
+                card.onclick = () => selectSpread(spread.id);
+                
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-tarot-gold">${spread.name}</h3>
+                        <span class="text-xs bg-tarot-gold/20 text-tarot-gold px-2 py-1 rounded-full">${spread.cardCount}张牌</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-4">${spread.description}</p>
+                    <div class="flex flex-wrap gap-1">
+                        ${spread.positions.map(pos => `<span class="text-xs text-gray-500 bg-tarot-dark/50 px-2 py-1 rounded">${pos.name}</span>`).join('')}
+                    </div>
+                `;
+                
+                spreadGrid.appendChild(card);
+            });
+        }
+        
+        // 选择牌阵
+        function selectSpread(spreadId) {
+            selectedSpread = tarotSpreads[spreadId];
+            
+            // 更新UI
+            document.querySelectorAll('.spread-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-spread-id="${spreadId}"]`).classList.add('selected');
+            
+            // 启用开始按钮
+            document.getElementById('startDrawBtn').disabled = false;
         }
         
         // 问题输入监听
@@ -508,16 +641,84 @@
             currentQuestion = question;
             currentStep = 2;
             
+            // 初始化牌阵选择
+            initSpreadSelection();
+            
             // 更新步骤指示器
-            document.getElementById('step1-dot').classList.remove('active');
-            document.getElementById('step1-dot').classList.add('completed');
-            document.getElementById('step2-dot').classList.add('active');
-            document.getElementById('step2-text').classList.remove('text-gray-400');
-            document.getElementById('step2-text').classList.add('text-tarot-gold');
+            updateStepIndicator(2);
             
             // 切换页面
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
+        }
+        
+        // 返回步骤1
+        function goBackToStep1() {
+            currentStep = 1;
+            updateStepIndicator(1);
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+        }
+        
+        // 进入步骤3
+        function goToStep3() {
+            if (!selectedSpread) return;
+            
+            currentStep = 3;
+            updateStepIndicator(3);
+            
+            // 更新抽卡进度显示
+            document.getElementById('totalCards').textContent = selectedSpread.cardCount;
+            
+            // 切换页面
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            
+            // 重置抽卡状态
+            resetDrawPhase();
+        }
+        
+        // 更新步骤指示器
+        function updateStepIndicator(step) {
+            const dots = ['step1-dot', 'step2-dot', 'step3-dot', 'step4-dot'];
+            const texts = ['step2-text', 'step3-text', 'step4-text'];
+            
+            dots.forEach((id, index) => {
+                const dot = document.getElementById(id);
+                const dotIndex = index + 1;
+                
+                dot.classList.remove('active', 'completed');
+                if (dotIndex === step) {
+                    dot.classList.add('active');
+                } else if (dotIndex < step) {
+                    dot.classList.add('completed');
+                }
+            });
+            
+            texts.forEach((id, index) => {
+                const text = document.getElementById(id);
+                const textIndex = index + 2;
+                
+                if (textIndex <= step) {
+                    text.classList.remove('text-gray-400');
+                    text.classList.add('text-tarot-gold');
+                } else {
+                    text.classList.add('text-gray-400');
+                    text.classList.remove('text-tarot-gold');
+                }
+            });
+        }
+        
+        // 重置抽卡阶段
+        function resetDrawPhase() {
+            document.getElementById('preparePhase').classList.remove('hidden');
+            document.getElementById('shufflePhase').classList.add('hidden');
+            document.getElementById('cutPhase').classList.add('hidden');
+            document.getElementById('drawPhase').classList.add('hidden');
+            document.getElementById('revealPhase').classList.add('hidden');
+            
+            drawnCards = [];
+            currentDrawIndex = 0;
         }
         
         // 开始洗牌
@@ -537,55 +738,78 @@
             document.getElementById('cutPhase').classList.add('hidden');
             document.getElementById('drawPhase').classList.remove('hidden');
             
-            // 2秒后进入翻牌阶段
+            // 开始抽卡
             setTimeout(() => {
-                revealCard();
-            }, 2000);
+                drawCards();
+            }, 1000);
         }
         
-        // 翻牌
-        function revealCard() {
-            // 随机抽取一张牌
-            const result = drawRandomCard();
-            drawnCard = result.card;
-            isReversed = result.isReversed;
+        // 抽卡
+        function drawCards() {
+            // 抽取指定数量的牌
+            for (let i = 0; i < selectedSpread.cardCount; i++) {
+                const card = tarotCards[Math.floor(Math.random() * tarotCards.length)];
+                const isReversed = Math.random() < 0.5;
+                drawnCards.push({ ...card, isReversed });
+            }
             
-            document.getElementById('drawPhase').classList.add('hidden');
-            document.getElementById('revealPhase').classList.remove('hidden');
+            // 更新进度
+            updateDrawProgress();
             
-            // 设置卡牌内容
-            document.getElementById('cardEmoji').textContent = drawnCard.emoji;
-            document.getElementById('cardName').textContent = drawnCard.name;
-            document.getElementById('cardPosition').textContent = isReversed ? '逆位' : '正位';
-            document.getElementById('revealTitle').textContent = drawnCard.name + ' ' + (isReversed ? '逆位' : '正位');
-            document.getElementById('revealKeyword').textContent = drawnCard.keywords.join('、');
-            
-            // 翻牌动画
+            // 显示翻牌阶段
             setTimeout(() => {
-                document.getElementById('revealedCard').classList.add('flipped');
-                if (isReversed) {
-                    document.getElementById('cardFront').classList.add('reversed');
-                }
-            }, 500);
+                document.getElementById('drawPhase').classList.add('hidden');
+                document.getElementById('revealPhase').classList.remove('hidden');
+                revealCards();
+            }, 1500);
         }
         
-        // 进入步骤3
-        function goToStep3() {
-            currentStep = 3;
+        // 更新抽卡进度
+        function updateDrawProgress() {
+            document.getElementById('drawProgress').textContent = `${selectedSpread.cardCount} / ${selectedSpread.cardCount}`;
+        }
+        
+        // 翻牌显示
+        function revealCards() {
+            const container = document.getElementById('revealedCardsContainer');
+            container.innerHTML = '';
             
-            // 更新步骤指示器
-            document.getElementById('step2-dot').classList.remove('active');
-            document.getElementById('step2-dot').classList.add('completed');
-            document.getElementById('step3-dot').classList.add('active');
-            document.getElementById('step3-text').classList.remove('text-gray-400');
-            document.getElementById('step3-text').classList.add('text-tarot-gold');
+            drawnCards.forEach((card, index) => {
+                const position = selectedSpread.positions[index];
+                const cardEl = document.createElement('div');
+                cardEl.className = 'spread-position animate-fade-in';
+                cardEl.style.animationDelay = `${index * 0.3}s`;
+                
+                cardEl.innerHTML = `
+                    <div class="tarot-card flipped">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front ${card.isReversed ? 'reversed' : ''}">
+                            <div class="text-4xl mb-2">${card.emoji}</div>
+                            <div class="text-tarot-gold font-bold text-center text-sm">${card.name}</div>
+                            <div class="text-gray-400 text-xs mt-1">${card.isReversed ? '逆位' : '正位'}</div>
+                        </div>
+                    </div>
+                    <div class="position-label">${position.name}</div>
+                `;
+                
+                container.appendChild(cardEl);
+            });
+        }
+        
+        // 进入步骤4
+        async function goToStep4() {
+            currentStep = 4;
+            updateStepIndicator(4);
             
             // 切换页面
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step3').classList.remove('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.remove('hidden');
             
             // 填充结果数据
             fillResultData();
+            
+            // 获取AI解读
+            await loadAIInterpretation();
         }
         
         // 填充结果数据
@@ -595,42 +819,106 @@
             
             document.getElementById('resultQuestion').textContent = currentQuestion;
             document.getElementById('resultTime').textContent = timeStr;
+            document.getElementById('resultSpread').textContent = `使用牌阵：${selectedSpread.name}`;
             
-            document.getElementById('resultCardEmoji').textContent = drawnCard.emoji;
-            document.getElementById('resultCardName').textContent = drawnCard.name;
-            document.getElementById('resultCardPosition').textContent = isReversed ? '逆位' : '正位';
+            // 显示结果牌面
+            const container = document.getElementById('resultCardsContainer');
+            container.innerHTML = '';
             
-            if (isReversed) {
-                document.getElementById('resultCardFront').classList.add('reversed');
-            }
-            
-            // 生成解读内容
-            const overallText = generateOverallReading(drawnCard, isReversed);
-            document.getElementById('overallReading').textContent = overallText;
-            
-            // 填充详情
-            document.getElementById('detailEmoji').textContent = drawnCard.emoji;
-            document.getElementById('detailCardName').textContent = drawnCard.name;
-            document.getElementById('detailPosition').textContent = isReversed ? '逆位' : '正位';
-            
-            // 关键词
-            const keywordsContainer = document.getElementById('keywords');
-            keywordsContainer.innerHTML = '';
-            drawnCard.keywords.forEach(keyword => {
-                const span = document.createElement('span');
-                span.className = 'px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm';
-                span.textContent = keyword;
-                keywordsContainer.appendChild(span);
+            drawnCards.forEach((card, index) => {
+                const position = selectedSpread.positions[index];
+                const cardEl = document.createElement('div');
+                cardEl.className = 'text-center';
+                cardEl.innerHTML = `
+                    <div class="tarot-card flipped">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front ${card.isReversed ? 'reversed' : ''}">
+                            <div class="text-5xl mb-2">${card.emoji}</div>
+                            <div class="text-tarot-gold font-bold text-center">${card.name}</div>
+                            <div class="text-gray-400 text-sm mt-1">${card.isReversed ? '逆位' : '正位'}</div>
+                        </div>
+                    </div>
+                    <div class="text-tarot-gold text-xs mt-2">${position.name}</div>
+                `;
+                container.appendChild(cardEl);
             });
             
-            document.getElementById('cardMeaning').textContent = drawnCard.meaning;
-            document.getElementById('cardAdvice').textContent = drawnCard.advice;
+            // 显示单张牌详情
+            const detailsContainer = document.getElementById('cardDetailsContainer');
+            detailsContainer.innerHTML = '';
+            
+            drawnCards.forEach((card, index) => {
+                const position = selectedSpread.positions[index];
+                const detailEl = document.createElement('div');
+                detailEl.className = 'glass rounded-2xl overflow-hidden';
+                detailEl.innerHTML = `
+                    <div class="p-4 bg-tarot-purple/30 border-b border-tarot-gold/20 cursor-pointer flex items-center justify-between" onclick="toggleCardDetail(${index})">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${card.emoji}</span>
+                            <div>
+                                <span class="text-white font-semibold">${position.name} - ${card.name}</span>
+                                <span class="text-tarot-gold ml-2">${card.isReversed ? '逆位' : '正位'}</span>
+                            </div>
+                        </div>
+                        <svg id="detailArrow-${index}" class="w-5 h-5 text-tarot-gold transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div id="cardDetail-${index}" class="result-card">
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <h4 class="text-tarot-gold font-semibold mb-2">关键词</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    ${card.keywords.map(kw => `<span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">${kw}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-tarot-gold font-semibold mb-2">牌意解读</h4>
+                                <p class="text-gray-300 text-sm leading-relaxed">${card.meaning}</p>
+                            </div>
+                            <div>
+                                <h4 class="text-tarot-gold font-semibold mb-2">建议指引</h4>
+                                <p class="text-gray-300 text-sm leading-relaxed">${card.advice}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                detailsContainer.appendChild(detailEl);
+            });
+        }
+        
+        // 加载AI解读
+        async function loadAIInterpretation() {
+            const loadingEl = document.getElementById('aiLoading');
+            const contentEl = document.getElementById('aiInterpretation');
+            
+            loadingEl.classList.remove('hidden');
+            contentEl.classList.add('hidden');
+            
+            try {
+                // 调用AI解读服务
+                const interpretation = await getAIInterpretation(currentQuestion, drawnCards, selectedSpread);
+                
+                // 将Markdown转换为HTML（简单处理）
+                const htmlContent = interpretation
+                    .replace(/### (.*)/g, '<h3>$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                
+                contentEl.innerHTML = htmlContent;
+                
+                loadingEl.classList.add('hidden');
+                contentEl.classList.remove('hidden');
+            } catch (error) {
+                console.error('AI解读加载失败:', error);
+                loadingEl.innerHTML = '<span class="text-red-400">AI解读加载失败，请查看单张牌详情</span>';
+            }
         }
         
         // 切换卡牌详情
-        function toggleCardDetail() {
-            const content = document.getElementById('cardDetailContent');
-            const arrow = document.getElementById('detailArrow');
+        function toggleCardDetail(index) {
+            const content = document.getElementById(`cardDetail-${index}`);
+            const arrow = document.getElementById(`detailArrow-${index}`);
             content.classList.toggle('expanded');
             arrow.classList.toggle('rotate-180');
         }
@@ -640,18 +928,12 @@
             // 重置所有状态
             currentStep = 1;
             currentQuestion = '';
-            drawnCard = null;
-            isReversed = false;
+            selectedSpread = null;
+            drawnCards = [];
+            currentDrawIndex = 0;
             
             // 重置步骤指示器
-            document.getElementById('step1-dot').classList.add('active');
-            document.getElementById('step1-dot').classList.remove('completed');
-            document.getElementById('step2-dot').classList.remove('active', 'completed');
-            document.getElementById('step3-dot').classList.remove('active', 'completed');
-            document.getElementById('step2-text').classList.add('text-gray-400');
-            document.getElementById('step2-text').classList.remove('text-tarot-gold');
-            document.getElementById('step3-text').classList.add('text-gray-400');
-            document.getElementById('step3-text').classList.remove('text-tarot-gold');
+            updateStepIndicator(1);
             
             // 重置输入
             document.getElementById('questionInput').value = '';
@@ -660,16 +942,14 @@
             document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
             
             // 重置抽卡阶段
-            document.getElementById('preparePhase').classList.remove('hidden');
-            document.getElementById('shufflePhase').classList.add('hidden');
-            document.getElementById('cutPhase').classList.add('hidden');
-            document.getElementById('drawPhase').classList.add('hidden');
-            document.getElementById('revealPhase').classList.add('hidden');
-            document.getElementById('revealedCard').classList.remove('flipped');
-            document.getElementById('cardFront').classList.remove('reversed');
-            document.getElementById('resultCardFront').classList.remove('reversed');
+            resetDrawPhase();
+            
+            // 重置AI解读
+            document.getElementById('aiLoading').classList.remove('hidden');
+            document.getElementById('aiInterpretation').classList.add('hidden');
             
             // 切换页面
+            document.getElementById('step4').classList.add('hidden');
             document.getElementById('step3').classList.add('hidden');
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step1').classList.remove('hidden');
@@ -682,23 +962,24 @@
         function saveResult() {
             const record = {
                 question: currentQuestion,
-                cardName: drawnCard.name,
-                cardEmoji: drawnCard.emoji,
-                isReversed: isReversed,
-                spreadType: '单张牌',
-                timestamp: new Date().toISOString(),
-                keywords: drawnCard.keywords,
-                meaning: drawnCard.meaning,
-                advice: drawnCard.advice
+                spreadType: selectedSpread.name,
+                cards: drawnCards.map(c => ({ name: c.name, emoji: c.emoji, isReversed: c.isReversed })),
+                timestamp: new Date().toISOString()
             };
             
-            saveDivinationRecord(record);
+            // 保存到本地存储
+            const history = JSON.parse(localStorage.getItem('divinationHistory') || '[]');
+            history.unshift(record);
+            if (history.length > 50) history.pop();
+            localStorage.setItem('divinationHistory', JSON.stringify(history));
+            
             showToast('已保存到历史记录');
         }
         
         // 分享结果
         function shareResult() {
-            const text = `我在星语塔罗抽到了【${drawnCard.name} ${isReversed ? '逆位' : '正位'}】\n问题：${currentQuestion}\n关键词：${drawnCard.keywords.join('、')}`;
+            const cardsText = drawnCards.map((c, i) => `${selectedSpread.positions[i].name}: ${c.name} ${c.isReversed ? '逆位' : '正位'}`).join('\n');
+            const text = `我在星语塔罗进行了占卜\n问题：${currentQuestion}\n牌阵：${selectedSpread.name}\n\n${cardsText}`;
             
             if (navigator.share) {
                 navigator.share({
@@ -709,6 +990,19 @@
                 navigator.clipboard.writeText(text).then(() => {
                     showToast('已复制到剪贴板');
                 });
+            }
+        }
+        
+        // 检查是否是每日一牌模式
+        function checkDailyCardMode() {
+            const isDaily = localStorage.getItem('dailyCardMode');
+            const dailyQuestion = localStorage.getItem('dailyCardQuestion');
+            
+            if (isDaily === 'true' && dailyQuestion) {
+                document.getElementById('questionInput').value = dailyQuestion;
+                document.getElementById('charCount').textContent = dailyQuestion.length + '/200字';
+                document.getElementById('nextBtn').disabled = false;
+                localStorage.removeItem('dailyCardMode');
             }
         }
         

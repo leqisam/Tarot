@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 星语塔罗</title>
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="./assets/css/common.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tarot: {
+                            dark: '#0a0a1a',
+                            purple: '#1a1a3e',
+                            purpleLight: '#2d2d5a',
+                            gold: '#d4af37',
+                            goldLight: '#f4d03f',
+                            goldDark: '#b8860b',
+                            mystic: '#6b4c9a',
+                            star: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Noto Serif SC', 'Cinzel', 'serif'],
+                        display: ['Cinzel', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(212, 175, 55, 0.2);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: #d4af37;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        
+        /* 历史记录卡片 */
+        .history-card {
+            transition: all 0.3s ease;
+        }
+        .history-card:hover {
+            transform: translateX(5px);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+        
+        /* 标签页 */
+        .tab-btn {
+            position: relative;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: #d4af37;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #d4af37;
+        }
+        
+        /* 统计卡片 */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(107, 76, 154, 0.1) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        /* 删除确认动画 */
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+        }
+        .deleting {
+            animation: slideOut 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body class="bg-tarot-dark text-white font-serif min-h-screen">
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="w-10 h-10 rounded-full bg-gradient-to-br from-tarot-gold to-tarot-goldDark flex items-center justify-center hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-tarot-dark" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </a>
+                    <span class="text-xl font-display font-bold text-tarot-gold">星语塔罗</span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-300 hover:text-tarot-gold transition-colors">首页</a>
+                    <a href="divination.html" class="text-gray-300 hover:text-tarot-gold transition-colors">开始占卜</a>
+                    <a href="profile.html" class="text-tarot-gold font-semibold border-b-2 border-tarot-gold">我的</a>
+                </div>
+                
+                <button id="mobileMenuBtn" class="md:hidden text-tarot-gold">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div id="mobileMenu" class="hidden md:hidden glass border-t border-tarot-gold/20">
+            <div class="px-4 py-3 space-y-2">
+                <a href="index.html" class="block py-2 text-gray-300 hover:text-tarot-gold">首页</a>
+                <a href="divination.html" class="block py-2 text-gray-300 hover:text-tarot-gold">开始占卜</a>
+                <a href="profile.html" class="block py-2 text-tarot-gold font-semibold">我的</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="relative z-10 pt-16">
+        <!-- 用户信息头部 -->
+        <section class="py-12 px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="glass rounded-2xl p-8">
+                    <div class="flex flex-col md:flex-row items-center gap-6">
+                        <!-- 头像 -->
+                        <div class="relative">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-tarot-gold to-tarot-mystic p-1">
+                                <div class="w-full h-full rounded-full bg-tarot-dark flex items-center justify-center text-4xl">
+                                    ✨
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户信息 -->
+                        <div class="flex-1 text-center md:text-left">
+                            <h2 class="text-2xl font-bold text-white mb-2">塔罗探索者</h2>
+                            <p class="text-gray-400 text-sm mb-4">探索命运的指引，聆听内心的声音</p>
+                            <div class="flex flex-wrap justify-center md:justify-start gap-4">
+                                <div class="stat-card px-4 py-2 rounded-lg">
+                                    <span class="text-tarot-gold font-bold text-xl" id="totalCount">0</span>
+                                    <span class="text-gray-400 text-sm ml-1">次占卜</span>
+                                </div>
+                                <div class="stat-card px-4 py-2 rounded-lg">
+                                    <span class="text-tarot-gold font-bold text-xl" id="streakDays">1</span>
+                                    <span class="text-gray-400 text-sm ml-1">天连续</span>
+                                </div>
+                                <div class="stat-card px-4 py-2 rounded-lg">
+                                    <span class="text-tarot-gold font-bold text-xl" id="favoriteCard">-</span>
+                                    <span class="text-gray-400 text-sm ml-1">最常出现</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 标签页导航 -->
+        <section class="px-4 sticky top-16 z-30 bg-tarot-dark/80 backdrop-blur-md border-b border-tarot-gold/10">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex">
+                    <button class="tab-btn active px-6 py-4 text-sm font-medium" onclick="switchTab('history')">
+                        占卜历史
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-sm font-medium text-gray-400" onclick="switchTab('settings')">
+                        设置
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 占卜历史标签页 -->
+        <section id="historyTab" class="py-8 px-4 min-h-[500px]">
+            <div class="max-w-4xl mx-auto">
+                <!-- 筛选和搜索 -->
+                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="搜索占卜记录..."
+                            class="w-full bg-tarot-dark/50 border border-tarot-gold/30 rounded-xl px-4 py-3 pl-10 text-white placeholder-gray-500 focus:outline-none focus:border-tarot-gold"
+                            oninput="filterHistory()"
+                        >
+                        <svg class="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <select id="filterSelect" onchange="filterHistory()" class="bg-tarot-dark/50 border border-tarot-gold/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-tarot-gold">
+                        <option value="all">全部记录</option>
+                        <option value="today">今天</option>
+                        <option value="week">最近一周</option>
+                        <option value="month">最近一月</option>
+                    </select>
+                </div>
+                
+                <!-- 历史记录列表 -->
+                <div id="historyList" class="space-y-4">
+                    <!-- 记录将通过JS动态生成 -->
+                </div>
+                
+                <!-- 空状态 -->
+                <div id="emptyState" class="hidden text-center py-20">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-tarot-purple/30 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-tarot-gold/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-tarot-gold mb-2">还没有占卜记录</h3>
+                    <p class="text-gray-400 mb-6">开始你的第一次塔罗之旅吧</p>
+                    <a href="divination.html" class="inline-block px-8 py-3 bg-gradient-to-r from-tarot-gold to-tarot-goldDark text-tarot-dark font-bold rounded-full hover:shadow-lg hover:shadow-tarot-gold/30 transition-all">
+                        开始占卜
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 设置标签页 -->
+        <section id="settingsTab" class="hidden py-8 px-4">
+            <div class="max-w-4xl mx-auto">
+                <!-- 显示设置 -->
+                <div class="glass rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-bold text-tarot-gold mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        显示设置
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between py-3 border-b border-tarot-gold/10">
+                            <div>
+                                <p class="text-white font-medium">动画效果</p>
+                                <p class="text-gray-400 text-sm">开启抽卡动画和过渡效果</p>
+                            </div>
+                            <div class="toggle-switch active" id="animation" onclick="toggleSwitch(this)"></div>
+                        </div>
+                        <div class="flex items-center justify-between py-3">
+                            <div>
+                                <p class="text-white font-medium">星空背景</p>
+                                <p class="text-gray-400 text-sm">显示动态星空背景效果</p>
+                            </div>
+                            <div class="toggle-switch active" id="starBg" onclick="toggleSwitch(this)"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 数据管理 -->
+                <div class="glass rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-bold text-tarot-gold mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                        </svg>
+                        数据管理
+                    </h3>
+                    <div class="space-y-3">
+                        <button onclick="exportData()" class="w-full flex items-center justify-between py-3 px-4 rounded-xl hover:bg-tarot-purple/30 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-tarot-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span class="text-white">导出数据</span>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        <button onclick="clearAllData()" class="w-full flex items-center justify-between py-3 px-4 rounded-xl hover:bg-red-500/10 transition-colors text-red-400">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <span>清除所有数据</span>
+                            </div>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 关于 -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-tarot-gold mb-6">关于</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between py-2">
+                            <span class="text-gray-400">版本</span>
+                            <span class="text-white">v1.0.0 MVP</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <span class="text-gray-400">塔罗牌库</span>
+                            <span class="text-white">22张大阿尔卡纳</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 删除确认弹窗 -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="glass rounded-2xl p-6 max-w-sm mx-4 animate-fade-in">
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">确认删除？</h3>
+                <p class="text-gray-400 mb-6">此操作不可撤销，确定要删除这条占卜记录吗？</p>
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 border border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all">
+                        取消
+                    </button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all">
+                        删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm overflow-y-auto">
+        <div class="glass rounded-2xl p-6 max-w-lg mx-4 my-8 animate-slide-up w-full">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-tarot-gold">占卜详情</h3>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="detailContent">
+                <!-- 详情内容将通过JS填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 公共脚本 -->
+    <script src="./assets/js/common.js"></script>
+    <!-- 页面特定脚本 -->
+    <script>
+        let historyData = [];
+        let deleteTargetId = null;
+        
+        // 加载历史记录
+        function loadHistory() {
+            historyData = getDivinationHistory();
+            updateStats();
+            renderHistory(historyData);
+        }
+        
+        // 更新统计数据
+        function updateStats() {
+            document.getElementById('totalCount').textContent = historyData.length;
+            
+            // 计算最常出现的牌
+            if (historyData.length > 0) {
+                const cardCount = {};
+                historyData.forEach(record => {
+                    cardCount[record.cardName] = (cardCount[record.cardName] || 0) + 1;
+                });
+                const favoriteCard = Object.entries(cardCount).sort((a, b) => b[1] - a[1])[0];
+                document.getElementById('favoriteCard').textContent = favoriteCard ? favoriteCard[0] : '-';
+            }
+            
+            // 计算连续天数（简化版）
+            if (historyData.length > 0) {
+                const today = new Date().toDateString();
+                const hasToday = historyData.some(r => new Date(r.timestamp).toDateString() === today);
+                document.getElementById('streakDays').textContent = hasToday ? '1' : '0';
+            }
+        }
+        
+        // 渲染历史记录
+        function renderHistory(data) {
+            const container = document.getElementById('historyList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (data.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            container.innerHTML = '';
+            
+            data.forEach((record, index) => {
+                const date = new Date(record.timestamp);
+                const timeStr = formatDate(date);
+                
+                const div = document.createElement('div');
+                div.className = 'history-card glass rounded-xl p-4 flex items-center gap-4 cursor-pointer';
+                div.dataset.id = index;
+                div.onclick = (e) => {
+                    if (!e.target.closest('.delete-btn')) {
+                        showDetail(index);
+                    }
+                };
+                
+                div.innerHTML = `
+                    <div class="w-16 h-24 bg-gradient-to-br from-tarot-gold to-tarot-mystic rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-2xl">${record.cardEmoji || '✨'}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-white font-semibold truncate">${record.question}</h4>
+                        <p class="text-gray-400 text-sm mt-1">${record.spreadType} · ${record.cardName} ${record.isReversed ? '逆位' : '正位'}</p>
+                        <p class="text-gray-500 text-xs mt-1">${timeStr}</p>
+                    </div>
+                    <button class="delete-btn p-2 text-gray-500 hover:text-red-400 transition-colors" onclick="showDeleteModal(${index})">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // 筛选历史记录
+        function filterHistory() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('filterSelect').value;
+            
+            let filtered = historyData.filter(record => {
+                const matchesSearch = record.question.toLowerCase().includes(searchTerm) ||
+                                    record.cardName.toLowerCase().includes(searchTerm);
+                
+                if (!matchesSearch) return false;
+                
+                const recordDate = new Date(record.timestamp);
+                const now = new Date();
+                
+                switch (filterType) {
+                    case 'today':
+                        return recordDate.toDateString() === now.toDateString();
+                    case 'week':
+                        const weekAgo = new Date(now);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return recordDate >= weekAgo;
+                    case 'month':
+                        const monthAgo = new Date(now);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        return recordDate >= monthAgo;
+                    default:
+                        return true;
+                }
+            });
+            
+            renderHistory(filtered);
+        }
+        
+        // 显示删除确认弹窗
+        function showDeleteModal(index) {
+            deleteTargetId = index;
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+        
+        // 关闭删除确认弹窗
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
+            deleteTargetId = null;
+        }
+        
+        // 确认删除
+        function confirmDelete() {
+            if (deleteTargetId === null) return;
+            
+            const card = document.querySelector(`[data-id="${deleteTargetId}"]`);
+            if (card) {
+                card.classList.add('deleting');
+                setTimeout(() => {
+                    historyData.splice(deleteTargetId, 1);
+                    localStorage.setItem('divinationHistory', JSON.stringify(historyData));
+                    loadHistory();
+                    showToast('已删除记录');
+                }, 300);
+            }
+            
+            closeDeleteModal();
+        }
+        
+        // 显示详情弹窗
+        function showDetail(index) {
+            const record = historyData[index];
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('detailContent');
+            
+            const date = new Date(record.timestamp);
+            
+            content.innerHTML = `
+                <div class="text-center mb-6">
+                    <div class="w-24 h-40 bg-gradient-to-br from-tarot-gold to-tarot-mystic rounded-xl mx-auto flex items-center justify-center mb-4 ${record.isReversed ? 'rotate-180' : ''}">
+                        <span class="text-5xl">${record.cardEmoji || '✨'}</span>
+                    </div>
+                    <h4 class="text-2xl font-bold text-tarot-gold">${record.cardName} ${record.isReversed ? '逆位' : '正位'}</h4>
+                    <p class="text-gray-400 mt-1">${date.toLocaleString('zh-CN')}</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-tarot-dark/50 rounded-xl p-4">
+                        <p class="text-gray-400 text-sm mb-1">你的问题</p>
+                        <p class="text-white">${record.question}</p>
+                    </div>
+                    
+                    <div class="bg-tarot-dark/50 rounded-xl p-4">
+                        <p class="text-gray-400 text-sm mb-2">关键词</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${record.keywords.map(k => `<span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">${k}</span>`).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-tarot-dark/50 rounded-xl p-4">
+                        <p class="text-gray-400 text-sm mb-1">牌意解读</p>
+                        <p class="text-gray-300 text-sm leading-relaxed">${record.meaning}</p>
+                    </div>
+                    
+                    <div class="bg-tarot-dark/50 rounded-xl p-4">
+                        <p class="text-gray-400 text-sm mb-1">建议指引</p>
+                        <p class="text-gray-300 text-sm leading-relaxed">${record.advice}</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeDetailModal()" class="flex-1 py-3 border border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all">
+                        关闭
+                    </button>
+                    <button onclick="shareRecord(${index})" class="flex-1 py-3 bg-gradient-to-r from-tarot-gold to-tarot-goldDark text-tarot-dark font-semibold rounded-full hover:shadow-lg transition-all">
+                        分享
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        // 关闭详情弹窗
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('flex');
+        }
+        
+        // 分享记录
+        function shareRecord(index) {
+            const record = historyData[index];
+            const text = `我在星语塔罗抽到了【${record.cardName} ${record.isReversed ? '逆位' : '正位'}】\n问题：${record.question}\n关键词：${record.keywords.join('、')}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '星语塔罗占卜结果',
+                    text: text
+                });
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('已复制到剪贴板');
+                });
+            }
+        }
+        
+        // 切换标签页
+        function switchTab(tab) {
+            const historyTab = document.getElementById('historyTab');
+            const settingsTab = document.getElementById('settingsTab');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            
+            tabBtns.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-gray-400');
+            });
+            
+            event.target.classList.add('active');
+            event.target.classList.remove('text-gray-400');
+            
+            if (tab === 'history') {
+                historyTab.classList.remove('hidden');
+                settingsTab.classList.add('hidden');
+            } else {
+                historyTab.classList.add('hidden');
+                settingsTab.classList.remove('hidden');
+            }
+        }
+        
+        // 开关切换
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+            const settingId = element.id;
+            const isActive = element.classList.contains('active');
+            localStorage.setItem('setting_' + settingId, isActive);
+            
+            // 特殊处理星空背景
+            if (settingId === 'starBg') {
+                document.getElementById('stars').style.display = isActive ? 'block' : 'none';
+            }
+        }
+        
+        // 加载设置
+        function loadSettings() {
+            const settings = ['animation', 'starBg'];
+            settings.forEach(id => {
+                const value = localStorage.getItem('setting_' + id);
+                const element = document.getElementById(id);
+                if (element && value !== null) {
+                    if (value === 'true') {
+                        element.classList.add('active');
+                    } else {
+                        element.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // 导出数据
+        function exportData() {
+            const data = {
+                history: historyData,
+                exportTime: new Date().toISOString(),
+                version: '1.0.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tarot_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('数据已导出');
+        }
+        
+        // 清除所有数据
+        function clearAllData() {
+            if (confirm('确定要清除所有数据吗？此操作不可撤销！')) {
+                localStorage.removeItem('divinationHistory');
+                historyData = [];
+                loadHistory();
+                showToast('所有数据已清除');
+            }
+        }
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+            loadSettings();
+        });
+    </script>
+</body>
+</html>

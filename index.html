@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星语塔罗 - 探索命运的指引</title>
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="./assets/css/common.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tarot: {
+                            dark: '#0a0a1a',
+                            purple: '#1a1a3e',
+                            purpleLight: '#2d2d5a',
+                            gold: '#d4af37',
+                            goldLight: '#f4d03f',
+                            goldDark: '#b8860b',
+                            mystic: '#6b4c9a',
+                            star: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Noto Serif SC', 'Cinzel', 'serif'],
+                        display: ['Cinzel', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-tarot-dark text-white font-serif min-h-screen">
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-tarot-gold to-tarot-goldDark flex items-center justify-center">
+                        <svg class="w-6 h-6 text-tarot-dark" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-display font-bold text-tarot-gold">星语塔罗</span>
+                </div>
+                
+                <!-- 桌面端导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-tarot-gold font-semibold border-b-2 border-tarot-gold">首页</a>
+                    <a href="divination.html" class="text-gray-300 hover:text-tarot-gold transition-colors duration-300">开始占卜</a>
+                    <a href="profile.html" class="text-gray-300 hover:text-tarot-gold transition-colors duration-300">我的</a>
+                </div>
+                
+                <!-- 移动端菜单按钮 -->
+                <button id="mobileMenuBtn" class="md:hidden text-tarot-gold">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="hidden md:hidden glass border-t border-tarot-gold/20">
+            <div class="px-4 py-3 space-y-2">
+                <a href="index.html" class="block py-2 text-tarot-gold font-semibold">首页</a>
+                <a href="divination.html" class="block py-2 text-gray-300 hover:text-tarot-gold">开始占卜</a>
+                <a href="profile.html" class="block py-2 text-gray-300 hover:text-tarot-gold">我的</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="relative z-10 pt-16">
+        <!-- Hero区域 -->
+        <section class="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+            <!-- 背景装饰 -->
+            <div class="absolute inset-0 bg-gradient-to-b from-tarot-purple/30 via-transparent to-tarot-dark"></div>
+            <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-tarot-mystic/20 rounded-full blur-3xl animate-pulse"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-tarot-gold/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+            
+            <div class="text-center max-w-4xl mx-auto relative">
+                <!-- 装饰图标 -->
+                <div class="mb-8 animate-float">
+                    <svg class="w-24 h-24 mx-auto text-tarot-gold opacity-80" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                
+                <!-- 主标题 -->
+                <h1 class="text-5xl md:text-7xl font-display font-bold mb-6 animate-fade-in">
+                    <span class="bg-gradient-to-r from-tarot-gold via-tarot-goldLight to-tarot-gold bg-clip-text text-transparent">
+                        探索命运的指引
+                    </span>
+                </h1>
+                
+                <!-- 副标题 -->
+                <p class="text-xl md:text-2xl text-gray-300 mb-4 font-light animate-slide-up" style="animation-delay: 0.3s;">
+                    聆听内心的声音
+                </p>
+                
+                <!-- 描述文字 -->
+                <p class="text-gray-400 max-w-2xl mx-auto mb-12 text-lg animate-slide-up" style="animation-delay: 0.5s;">
+                    在星光的指引下，揭开塔罗牌的神秘面纱，寻找属于你的答案
+                </p>
+                
+                <!-- CTA按钮 -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style="animation-delay: 0.7s;">
+                    <a href="divination.html" class="btn-glow group relative px-10 py-4 bg-gradient-to-r from-tarot-gold to-tarot-goldDark text-tarot-dark font-bold text-lg rounded-full shadow-lg shadow-tarot-gold/30 hover:shadow-tarot-gold/50 transition-all duration-300 hover:scale-105">
+                        <span class="relative z-10 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            开始占卜
+                        </span>
+                    </a>
+                    <button onclick="startDailyCard()" class="px-8 py-4 border-2 border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all duration-300">
+                        每日一牌
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 向下滚动提示 -->
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <svg class="w-6 h-6 text-tarot-gold/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- 快速入口区域 -->
+        <section id="features" class="py-20 px-4">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-center mb-4 text-tarot-gold">
+                    开启你的塔罗之旅
+                </h2>
+                <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+                    选择适合你的方式，获得来自宇宙的指引
+                </p>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- 每日一牌 -->
+                    <div class="card-hover glass rounded-2xl p-8 text-center group cursor-pointer" onclick="startDailyCard()">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-tarot-mystic to-tarot-purpleLight flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-10 h-10 text-tarot-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-tarot-gold mb-3">每日一牌</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            快速抽取今日指引牌，了解今天的运势和建议，开启美好的一天
+                        </p>
+                        <div class="mt-6 text-tarot-gold/70 text-sm group-hover:text-tarot-gold transition-colors">
+                            立即体验 →
+                        </div>
+                    </div>
+                    
+                    <!-- 开始占卜 -->
+                    <div class="card-hover glass rounded-2xl p-8 text-center group cursor-pointer relative overflow-hidden" onclick="location.href='divination.html'">
+                        <!-- 推荐标签 -->
+                        <div class="absolute top-4 right-4 px-3 py-1 bg-tarot-gold text-tarot-dark text-xs font-bold rounded-full">
+                            推荐
+                        </div>
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-tarot-gold to-tarot-goldDark flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-10 h-10 text-tarot-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-tarot-gold mb-3">开始占卜</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            提出你的问题，选择牌阵，在神秘的仪式中获得专属的塔罗指引
+                        </p>
+                        <div class="mt-6 text-tarot-gold/70 text-sm group-hover:text-tarot-gold transition-colors">
+                            开始探索 →
+                        </div>
+                    </div>
+                    
+                    <!-- 历史记录 -->
+                    <div class="card-hover glass rounded-2xl p-8 text-center group cursor-pointer" onclick="location.href='profile.html'">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-tarot-purpleLight to-tarot-mystic flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-10 h-10 text-tarot-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-tarot-gold mb-3">历史记录</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            查看你之前的占卜记录，回顾塔罗牌给你的指引和建议
+                        </p>
+                        <div class="mt-6 text-tarot-gold/70 text-sm group-hover:text-tarot-gold transition-colors">
+                            查看记录 →
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 最近占卜记录 -->
+        <section class="py-20 px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-tarot-gold">最近占卜</h2>
+                    <a href="profile.html" class="text-sm text-tarot-gold/70 hover:text-tarot-gold transition-colors">查看全部 →</a>
+                </div>
+                
+                <div class="space-y-4" id="recentDivinations">
+                    <!-- 记录将通过JS动态生成 -->
+                </div>
+                
+                <!-- 空状态 -->
+                <div id="emptyState" class="hidden text-center py-12">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-tarot-purple/30 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-tarot-gold/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-400">还没有占卜记录</p>
+                    <a href="divination.html" class="inline-block mt-4 text-tarot-gold hover:underline">开始你的第一次占卜</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航 -->
+    <footer class="glass mt-20 py-8 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tarot-gold to-tarot-goldDark flex items-center justify-center">
+                        <svg class="w-4 h-4 text-tarot-dark" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <span class="text-tarot-gold font-display font-bold">星语塔罗</span>
+                </div>
+                <p class="text-gray-500 text-sm">探索命运的指引，聆听内心的声音</p>
+                <div class="flex items-center gap-6 text-sm text-gray-400">
+                    <span class="text-gray-500">MVP版本 v1.0.0</span>
+                </div>
+            </div>
+            <div class="text-center text-gray-600 text-xs mt-6">
+                © 2026 星语塔罗. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- 公共脚本 -->
+    <script src="./assets/js/common.js"></script>
+    <!-- 页面特定脚本 -->
+    <script>
+        // 每日一牌功能
+        function startDailyCard() {
+            localStorage.setItem('dailyCardMode', 'true');
+            localStorage.setItem('dailyCardQuestion', '今日运势');
+            window.location.href = 'divination.html';
+        }
+        
+        // 加载最近占卜记录
+        function loadRecentDivinations() {
+            const history = getDivinationHistory();
+            const container = document.getElementById('recentDivinations');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (history.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            container.innerHTML = '';
+            
+            // 显示最近2条记录
+            history.slice(0, 2).forEach(record => {
+                const date = new Date(record.timestamp);
+                const timeStr = formatTime(date);
+                
+                const div = document.createElement('div');
+                div.className = 'glass rounded-xl p-4 flex items-center gap-4 hover:bg-tarot-purple/30 transition-colors cursor-pointer';
+                div.onclick = () => window.location.href = 'profile.html';
+                div.innerHTML = `
+                    <div class="w-16 h-24 bg-gradient-to-br from-tarot-gold to-tarot-mystic rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-2xl">${record.cardEmoji || '✨'}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-white font-semibold truncate">${record.question}</h4>
+                        <p class="text-gray-400 text-sm mt-1">${record.spreadType} · ${record.cardName} ${record.isReversed ? '逆位' : '正位'}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-gray-500 text-sm">${timeStr}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecentDivinations();
+        });
+    </script>
+</body>
+</html>

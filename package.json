@@ -1,0 +1,21 @@
+{
+  "name": "tarot-app",
+  "version": "1.0.0",
+  "description": "星语塔罗 - 基于Web的塔罗牌占卜应用",
+  "scripts": {
+    "dev": "npx serve src",
+    "build": "echo 'Static site - no build needed'",
+    "start": "npx serve src"
+  },
+  "keywords": [
+    "tarot",
+    "divination",
+    "html5",
+    "tailwindcss"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

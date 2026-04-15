@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开始占卜 - 星语塔罗</title>
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tarot: {
+                            dark: '#0a0a1a',
+                            purple: '#1a1a3e',
+                            purpleLight: '#2d2d5a',
+                            gold: '#d4af37',
+                            goldLight: '#f4d03f',
+                            goldDark: '#b8860b',
+                            mystic: '#6b4c9a',
+                            star: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Noto Serif SC', 'Cinzel', 'serif'],
+                        display: ['Cinzel', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'shake': 'shake 0.5s ease-in-out',
+                        'flip': 'flip 1s ease-in-out forwards',
+                        'deal': 'deal 0.8s ease-out forwards',
+                        'shuffle': 'shuffle 0.3s ease-in-out'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #d4af37, 0 0 10px #d4af37' },
+                            '100%': { boxShadow: '0 0 20px #d4af37, 0 0 30px #d4af37, 0 0 40px #d4af37' }
+                        },
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-5px) rotate(-5deg)' },
+                            '75%': { transform: 'translateX(5px) rotate(5deg)' }
+                        },
+                        flip: {
+                            '0%': { transform: 'rotateY(0deg)' },
+                            '100%': { transform: 'rotateY(180deg)' }
+                        },
+                        deal: {
+                            '0%': { transform: 'translateY(-100px) scale(0.5)', opacity: '0' },
+                            '50%': { transform: 'translateY(20px) scale(1.1)', opacity: '1' },
+                            '100%': { transform: 'translateY(0) scale(1)', opacity: '1' }
+                        },
+                        shuffle: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '50%': { transform: 'translateX(20px) rotate(5deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 星空背景 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* 玻璃态效果 */
+        .glass {
+            background: rgba(26, 26, 62, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        /* 卡牌样式 */
+        .tarot-card {
+            width: 120px;
+            height: 200px;
+            border-radius: 12px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        
+        .tarot-card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d2d5a 50%, #1a1a3e 100%);
+            border: 2px solid #d4af37;
+        }
+        
+        .card-back::before {
+            content: '✦';
+            font-size: 48px;
+            color: #d4af37;
+            opacity: 0.8;
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, #2d2d5a 0%, #1a1a3e 100%);
+            border: 2px solid #d4af37;
+            transform: rotateY(180deg);
+            flex-direction: column;
+            padding: 12px;
+        }
+        
+        .card-front.reversed {
+            transform: rotateY(180deg) rotate(180deg);
+        }
+        
+        /* 卡牌堆叠效果 */
+        .card-stack {
+            position: relative;
+            width: 120px;
+            height: 200px;
+        }
+        
+        .card-stack .tarot-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .card-stack .tarot-card:nth-child(1) { transform: rotate(-2deg) translateX(-2px); }
+        .card-stack .tarot-card:nth-child(2) { transform: rotate(1deg) translateX(1px); }
+        .card-stack .tarot-card:nth-child(3) { transform: rotate(-1deg) translateX(-1px); }
+        
+        /* 步骤指示器 */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .step-dot.active {
+            background: #d4af37;
+            box-shadow: 0 0 10px #d4af37;
+        }
+        
+        .step-dot.completed {
+            background: #d4af37;
+        }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 4px;
+        }
+        
+        /* 按钮光效 */
+        .btn-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .btn-glow:hover::before {
+            left: 100%;
+        }
+        
+        /* 标签选择效果 */
+        .tag-btn {
+            transition: all 0.3s;
+        }
+        .tag-btn:hover, .tag-btn.selected {
+            background: #d4af37;
+            color: #0a0a1a;
+            border-color: #d4af37;
+        }
+        
+        /* 洗牌动画 */
+        @keyframes shuffleCard {
+            0% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-30px) rotate(-10deg); }
+            50% { transform: translateX(0) rotate(0deg); }
+            75% { transform: translateX(30px) rotate(10deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+        
+        .shuffling {
+            animation: shuffleCard 0.5s ease-in-out infinite;
+        }
+        
+        /* 结果卡片展开效果 */
+        .result-card {
+            max-height: 80px;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+        .result-card.expanded {
+            max-height: 500px;
+        }
+        
+        /* 幽灵光标效果 */
+        .ghost-cursor {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        
+        .ghost-cursor > canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        
+        /* 星空边框特效 - 用于按钮和链接 */
+        .star-border-container {
+            display: inline-block;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .border-gradient-bottom {
+            position: absolute;
+            width: 300%;
+            height: 50%;
+            opacity: 0.7;
+            bottom: -12px;
+            right: -250%;
+            border-radius: 50%;
+            animation: star-movement-bottom linear infinite alternate;
+            z-index: 0;
+            background: radial-gradient(circle, #d4af37 0%, #6b4c9a 50%, transparent 70%);
+        }
+        
+        .border-gradient-top {
+            position: absolute;
+            opacity: 0.7;
+            width: 300%;
+            height: 50%;
+            top: -12px;
+            left: -250%;
+            border-radius: 50%;
+            animation: star-movement-top linear infinite alternate;
+            z-index: 0;
+            background: radial-gradient(circle, #d4af37 0%, #6b4c9a 50%, transparent 70%);
+        }
+        
+        .inner-content {
+            position: relative;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d2d5a 100%);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            padding: 16px 26px;
+            border-radius: 20px;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        @keyframes star-movement-bottom {
+            0% {
+                transform: translate(0%, 0%);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-100%, 0%);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes star-movement-top {
+            0% {
+                transform: translate(0%, 0%);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(100%, 0%);
+                opacity: 0;
+            }
+        }
+        
+        /* 磁力吸附效果 */
+        .magnet-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .magnet-inner {
+            will-change: transform;
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .magnet-inner.active {
+            transition: transform 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-tarot-dark text-white font-serif min-h-screen">
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="w-10 h-10 rounded-full bg-gradient-to-br from-tarot-gold to-tarot-goldDark flex items-center justify-center hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-tarot-dark" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </a>
+                    <span class="text-xl font-display font-bold text-tarot-gold">星语塔罗</span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-300 hover:text-tarot-gold transition-colors">首页</a>
+                    <a href="divination.html" class="text-tarot-gold font-semibold border-b-2 border-tarot-gold">开始占卜</a>
+                    <a href="#" class="text-gray-300 hover:text-tarot-gold transition-colors">牌意库</a>
+                    <a href="profile.html" class="text-gray-300 hover:text-tarot-gold transition-colors">我的</a>
+                </div>
+                
+                <button id="mobileMenuBtn" class="md:hidden text-tarot-gold">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div id="mobileMenu" class="hidden md:hidden glass border-t border-tarot-gold/20">
+            <div class="px-4 py-3 space-y-2">
+                <a href="index.html" class="block py-2 text-gray-300 hover:text-tarot-gold">首页</a>
+                <a href="divination.html" class="block py-2 text-tarot-gold font-semibold">开始占卜</a>
+                <a href="#" class="block py-2 text-gray-300 hover:text-tarot-gold">牌意库</a>
+                <a href="profile.html" class="block py-2 text-gray-300 hover:text-tarot-gold">我的</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="relative z-10 pt-16 min-h-screen">
+        <!-- 步骤指示器 -->
+        <div class="fixed top-20 left-0 right-0 z-40 flex justify-center">
+            <div class="glass rounded-full px-6 py-3 flex items-center gap-4">
+                <div class="step-indicator">
+                    <div class="step-dot active" id="step1-dot"></div>
+                    <span class="text-sm text-tarot-gold">问题</span>
+                </div>
+                <div class="w-8 h-px bg-tarot-gold/30"></div>
+                <div class="step-indicator">
+                    <div class="step-dot" id="step2-dot"></div>
+                    <span class="text-sm text-gray-400" id="step2-text">抽卡</span>
+                </div>
+                <div class="w-8 h-px bg-tarot-gold/30"></div>
+                <div class="step-indicator">
+                    <div class="step-dot" id="step3-dot"></div>
+                    <span class="text-sm text-gray-400" id="step3-text">解读</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤1：问题输入 -->
+        <section id="step1" class="min-h-screen flex items-center justify-center px-4 pt-20">
+            <div class="max-w-2xl w-full">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-tarot-gold mb-4">
+                        你想问什么问题？
+                    </h2>
+                    <p class="text-gray-400">
+                        在心中默念你的问题，塔罗牌会为你指引方向
+                    </p>
+                </div>
+                
+                <div class="glass rounded-2xl p-8">
+                    <!-- 问题输入框 -->
+                    <div class="mb-6">
+                        <textarea 
+                            id="questionInput" 
+                            class="w-full h-32 bg-tarot-dark/50 border border-tarot-gold/30 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-tarot-gold resize-none transition-colors"
+                            placeholder="请输入你想问的问题...（5-200字）"
+                            maxlength="200"
+                        ></textarea>
+                        <div class="flex justify-between mt-2 text-sm">
+                            <span id="charCount" class="text-gray-500">0/200字</span>
+                            <span id="errorMsg" class="text-red-400 hidden">请输入至少5个字</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 热门问题标签 -->
+                    <div class="mb-8">
+                        <p class="text-gray-400 text-sm mb-3">热门问题：</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="tag-btn px-4 py-2 border border-tarot-gold/30 rounded-full text-sm text-gray-300" onclick="selectTag(this, '我和TA的感情会如何发展？')">感情发展</button>
+                            <button class="tag-btn px-4 py-2 border border-tarot-gold/30 rounded-full text-sm text-gray-300" onclick="selectTag(this, '我该如何选择职业方向？')">事业选择</button>
+                            <button class="tag-btn px-4 py-2 border border-tarot-gold/30 rounded-full text-sm text-gray-300" onclick="selectTag(this, '最近的财运如何？')">财运状况</button>
+                            <button class="tag-btn px-4 py-2 border border-tarot-gold/30 rounded-full text-sm text-gray-300" onclick="selectTag(this, '我该如何改善人际关系？')">人际关系</button>
+                            <button class="tag-btn px-4 py-2 border border-tarot-gold/30 rounded-full text-sm text-gray-300" onclick="selectTag(this, '我的健康状况需要注意什么？')">健康状况</button>
+                            <button class="tag-btn px-4 py-2 border border-tarot-gold/30 rounded-full text-sm text-gray-300" onclick="selectTag(this, '这次考试/面试会顺利吗？')">学业考试</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 下一步按钮 - 星空边框特效 -->
+                    <div class="star-border-container w-full" id="nextBtnContainer">
+                        <div class="border-gradient-bottom" style="animation-duration: 2s;"></div>
+                        <div class="border-gradient-top" style="animation-duration: 2s;"></div>
+                        <button 
+                            id="nextBtn" 
+                            onclick="goToStep2()"
+                            class="inner-content w-full font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled
+                        >
+                            下一步
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 步骤2：抽卡过程 -->
+        <section id="step2" class="hidden min-h-screen flex items-center justify-center px-4 pt-20">
+            <div class="max-w-4xl w-full text-center">
+                <!-- 准备阶段 -->
+                <div id="preparePhase" class="py-20">
+                    <div class="mb-8">
+                        <div class="card-stack mx-auto mb-8" style="width: 120px;">
+                            <div class="tarot-card">
+                                <div class="card-face card-back"></div>
+                            </div>
+                            <div class="tarot-card" style="top: 2px; left: 2px;">
+                                <div class="card-face card-back"></div>
+                            </div>
+                            <div class="tarot-card" style="top: 4px; left: -2px;">
+                                <div class="card-face card-back"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4">准备开始</h3>
+                    <p class="text-gray-400 mb-8">深呼吸，集中精神想着你的问题</p>
+                    <!-- 开始洗牌按钮 - 星空边框特效 -->
+                    <div class="star-border-container">
+                        <div class="border-gradient-bottom" style="animation-duration: 2s;"></div>
+                        <div class="border-gradient-top" style="animation-duration: 2s;"></div>
+                        <button onclick="startShuffle()" class="inner-content font-bold">
+                            开始洗牌
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 洗牌阶段 -->
+                <div id="shufflePhase" class="hidden py-20">
+                    <div class="mb-8">
+                        <div id="shuffleCards" class="flex justify-center items-center gap-4">
+                            <div class="tarot-card shuffling">
+                                <div class="card-face card-back"></div>
+                            </div>
+                            <div class="tarot-card shuffling" style="animation-delay: 0.1s;">
+                                <div class="card-face card-back"></div>
+                            </div>
+                            <div class="tarot-card shuffling" style="animation-delay: 0.2s;">
+                                <div class="card-face card-back"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4 animate-pulse">正在洗牌...</h3>
+                    <p class="text-gray-400">让塔罗牌感受你的能量</p>
+                </div>
+                
+                <!-- 切牌阶段 - 幽灵光标效果 -->
+                <div id="cutPhase" class="hidden py-10">
+                    <div class="mb-4 relative" style="height: 400px;">
+                        <!-- 幽灵光标画布容器 -->
+                        <div class="ghost-cursor" id="ghostCursorContainer">
+                            <canvas id="ghostCursorCanvas"></canvas>
+                        </div>
+                        <!-- 切牌区域 - 磁力吸附效果 -->
+                        <div class="absolute inset-0 flex justify-center items-center gap-16 z-10">
+                            <!-- 左侧卡牌 -->
+                            <div class="magnet-wrapper" id="magnetLeft" data-padding="100" data-strength="2">
+                                <div class="magnet-inner">
+                                    <div class="tarot-card cursor-pointer hover:scale-105 transition-transform" onclick="cutCards()">
+                                        <div class="card-face card-back"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-4xl text-tarot-gold">✦</div>
+                            <!-- 右侧卡牌 -->
+                            <div class="magnet-wrapper" id="magnetRight" data-padding="100" data-strength="2">
+                                <div class="magnet-inner">
+                                    <div class="tarot-card cursor-pointer hover:scale-105 transition-transform" onclick="cutCards()">
+                                        <div class="card-face card-back"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4">请点击切牌</h3>
+                    <p class="text-gray-400">选择一堆卡牌，将决定你的命运</p>
+                </div>
+                
+                <!-- 抽卡阶段 - 反重力粒子特效 -->
+                <div id="drawPhase" class="hidden py-10">
+                    <div class="mb-4">
+                        <!-- 反重力粒子画布容器 -->
+                        <div id="antigravityContainer" style="width: 100%; height: 400px; position: relative; overflow: hidden;">
+                            <canvas id="antigravityCanvas" style="width: 100%; height: 100%;"></canvas>
+                            <!-- 中央卡牌 -->
+                            <div id="particleCard" class="tarot-card mx-auto" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 1s ease-out; z-index: 10;">
+                                <div class="card-face card-back"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4">正在抽卡...</h3>
+                    <p class="text-gray-400">命运之轮正在转动</p>
+                </div>
+                
+                <!-- 翻牌阶段 -->
+                <div id="revealPhase" class="hidden py-20">
+                    <div class="mb-8">
+                        <div id="revealedCard" class="tarot-card mx-auto">
+                            <div class="card-face card-back"></div>
+                            <div class="card-face card-front" id="cardFront">
+                                <div class="text-5xl mb-2" id="cardEmoji">🌙</div>
+                                <div class="text-tarot-gold font-bold text-center" id="cardName">月亮</div>
+                                <div class="text-gray-400 text-sm mt-1" id="cardPosition">正位</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold text-tarot-gold mb-4" id="revealTitle">月亮 正位</h3>
+                    <p class="text-gray-400 mb-8" id="revealKeyword">幻觉、恐惧、潜意识</p>
+                    <!-- 查看解读按钮 - 星空边框特效 -->
+                    <div class="star-border-container">
+                        <div class="border-gradient-bottom" style="animation-duration: 2s;"></div>
+                        <div class="border-gradient-top" style="animation-duration: 2s;"></div>
+                        <button onclick="goToStep3()" class="inner-content font-bold">
+                            查看解读
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 步骤3：结果展示 -->
+        <section id="step3" class="hidden min-h-screen px-4 pt-24 pb-20">
+            <div class="max-w-4xl mx-auto">
+                <!-- 结果头部 -->
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-tarot-gold mb-4">
+                        占卜结果
+                    </h2>
+                    <div class="glass rounded-xl p-4 inline-block">
+                        <p class="text-gray-300 mb-2">你的问题：</p>
+                        <p class="text-white text-lg font-semibold" id="resultQuestion">我和他的关系会走向何方？</p>
+                        <p class="text-gray-500 text-sm mt-2" id="resultTime">2026-04-14 14:30</p>
+                    </div>
+                </div>
+                
+                <!-- 牌面展示 -->
+                <div class="flex justify-center mb-10">
+                    <div id="resultCard" class="tarot-card flipped">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front" id="resultCardFront">
+                            <div class="text-6xl mb-2" id="resultCardEmoji">🌙</div>
+                            <div class="text-tarot-gold font-bold text-lg text-center" id="resultCardName">月亮</div>
+                            <div class="text-gray-400 text-sm mt-1" id="resultCardPosition">正位</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 整体解读 -->
+                <div class="glass rounded-2xl p-6 mb-6">
+                    <h3 class="text-xl font-bold text-tarot-gold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        整体解读
+                    </h3>
+                    <p class="text-gray-300 leading-relaxed" id="overallReading">
+                        月亮牌正位出现在你的占卜中，象征着潜意识的力量和内心的直觉。这张牌暗示你目前可能正处于一个充满不确定性的阶段，事情并非表面看起来那样简单。你的直觉正在试图告诉你一些重要的信息，建议你多倾听内心的声音。
+                    </p>
+                </div>
+                
+                <!-- 单张牌详情 -->
+                <div class="glass rounded-2xl overflow-hidden mb-6">
+                    <div class="p-4 bg-tarot-purple/30 border-b border-tarot-gold/20 cursor-pointer flex items-center justify-between" onclick="toggleCardDetail()">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl" id="detailEmoji">🌙</span>
+                            <div>
+                                <span class="text-white font-semibold" id="detailCardName">月亮</span>
+                                <span class="text-tarot-gold ml-2" id="detailPosition">正位</span>
+                            </div>
+                        </div>
+                        <svg id="detailArrow" class="w-5 h-5 text-tarot-gold transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div id="cardDetailContent" class="result-card">
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <h4 class="text-tarot-gold font-semibold mb-2">关键词</h4>
+                                <div class="flex flex-wrap gap-2" id="keywords">
+                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">幻觉</span>
+                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">恐惧</span>
+                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">潜意识</span>
+                                    <span class="px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm">直觉</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-tarot-gold font-semibold mb-2">牌意解读</h4>
+                                <p class="text-gray-300 text-sm leading-relaxed" id="cardMeaning">
+                                    月亮牌代表着潜意识的世界和内心的直觉。它暗示着事情可能不像表面看起来那样清晰，存在着隐藏的真相等待你去发现。这张牌鼓励你相信自己的直觉，即使它与你所看到的现实不符。
+                                </p>
+                            </div>
+                            <div>
+                                <h4 class="text-tarot-gold font-semibold mb-2">建议指引</h4>
+                                <p class="text-gray-300 text-sm leading-relaxed" id="cardAdvice">
+                                    面对当前的情况，建议你保持冷静和耐心。不要被表面的现象所迷惑，深入探索事情的本质。相信自己的直觉，它会引导你找到正确的方向。同时，也要注意分辨真实与幻象，避免被恐惧所支配。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button onclick="restartDivination()" class="px-6 py-3 border-2 border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        重新占卜
+                    </button>
+                    <button onclick="saveResult()" class="px-6 py-3 border-2 border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                        </svg>
+                        保存结果
+                    </button>
+                    <button onclick="shareResult()" class="px-6 py-3 border-2 border-tarot-gold/50 text-tarot-gold rounded-full hover:bg-tarot-gold/10 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        分享
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 保存成功提示 -->
+    <div id="saveToast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 glass px-6 py-3 rounded-full text-tarot-gold opacity-0 transition-opacity duration-300 pointer-events-none z-50">
+        已保存到历史记录
+    </div>
+
+    <script>
+        // 大阿尔卡纳牌数据
+        const tarotCards = [
+            { name: '愚人', emoji: '🃏', keywords: ['新的开始', '冒险', '纯真'], meaning: '愚人代表着新的开始和无限的潜能。它象征着跳出舒适区，勇敢地踏上未知旅程的勇气。', advice: '保持开放的心态，勇敢地迈出第一步。相信宇宙会接住你。' },
+            { name: '魔术师', emoji: '🎩', keywords: ['创造力', '行动力', '自信'], meaning: '魔术师拥有实现目标所需的所有资源和能力。他象征着创造力和将想法转化为现实的力量。', advice: '相信自己的能力，运用你的技能和资源去实现目标。' },
+            { name: '女祭司', emoji: '🌙', keywords: ['直觉', '神秘', '潜意识'], meaning: '女祭司代表着内在的智慧和直觉。她鼓励你倾听内心的声音，相信你的直觉。', advice: '花时间独处和冥想，答案就在你的内心深处。' },
+            { name: '皇后', emoji: '👑', keywords: ['丰饶', '母性', '创造力'], meaning: '皇后象征着丰饶、滋养和创造力。她代表着大自然的丰盛和母性的关怀。', advice: '照顾好自己的需求，让创造力自由流动。' },
+            { name: '皇帝', emoji: '🏛️', keywords: ['权威', '稳定', '控制'], meaning: '皇帝代表着结构、秩序和权威。他象征着通过纪律和规划实现目标的能力。', advice: '建立稳定的结构，用理性和逻辑来解决问题。' },
+            { name: '教皇', emoji: '⛪', keywords: ['传统', '信仰', '教育'], meaning: '教皇代表着传统、信仰和精神指引。他象征着寻求智慧和指导的需求。', advice: '尊重传统，向有经验的人寻求建议。' },
+            { name: '恋人', emoji: '💕', keywords: ['爱情', '选择', '和谐'], meaning: '恋人牌代表着爱情、关系和重要的选择。它象征着心灵的结合和价值观的一致性。', advice: '跟随你的心，做出符合你价值观的选择。' },
+            { name: '战车', emoji: '🏆', keywords: ['意志', '胜利', '控制'], meaning: '战车代表着通过意志力和决心克服困难。它象征着成功和目标的实现。', advice: '保持专注，用你的意志力去克服障碍。' },
+            { name: '力量', emoji: '🦁', keywords: ['勇气', '耐心', '内在力量'], meaning: '力量代表着内在的勇气和耐心。它象征着用温柔和同情心去驯服内在野兽的能力。', advice: '用耐心和同情心来处理情况，相信你的内在力量。' },
+            { name: '隐士', emoji: '🕯️', keywords: ['内省', '孤独', '智慧'], meaning: '隐士代表着内省和寻求内在真理的旅程。他象征着独处中寻找智慧的时期。', advice: '花时间独处，寻找内在的答案和智慧。' },
+            { name: '命运之轮', emoji: '☸️', keywords: ['变化', '命运', '周期'], meaning: '命运之轮代表着生命的周期和变化。它象征着命运的转动和机遇的到来。', advice: '接受变化，顺应生命的流动。好运正在路上。' },
+            { name: '正义', emoji: '⚖️', keywords: ['公正', '平衡', '因果'], meaning: '正义代表着公正、平衡和因果法则。它象征着清晰的思维和公正的决策。', advice: '寻求真相，做出公正的决定。你的行为会有相应的结果。' },
+            { name: '倒吊人', emoji: '🙃', keywords: ['牺牲', '等待', '新视角'], meaning: '倒吊人代表着暂停、牺牲和从新的角度看问题。它象征着通过放下来获得启迪。', advice: '暂停一下，从不同的角度看待情况。有时候放手是最好的选择。' },
+            { name: '死神', emoji: '💀', keywords: ['结束', '转变', '重生'], meaning: '死神代表着结束和转变。它象征着旧事物的结束为新事物的开始腾出空间。', advice: '接受结束，拥抱转变。新的开始正在等待着你。' },
+            { name: '节制', emoji: '🏺', keywords: ['平衡', '调和', '耐心'], meaning: '节制代表着平衡、调和和耐心。它象征着找到中间道路和整合对立面的能力。', advice: '寻求平衡，避免极端。耐心和适度是关键。' },
+            { name: '恶魔', emoji: '😈', keywords: ['束缚', '欲望', '物质主义'], meaning: '恶魔代表着束缚、欲望和物质主义。它象征着那些限制我们自由的自我设限。', advice: '认识到你的束缚是自找的。你有力量打破这些枷锁。' },
+            { name: '塔', emoji: '🗼', keywords: ['突变', '觉醒', '破坏'], meaning: '塔代表着突然的变化和旧结构的崩塌。它象征着必要的破坏为新的成长铺平道路。', advice: '接受突然的变化，虽然痛苦但必要。新的基础将会建立。' },
+            { name: '星星', emoji: '⭐', keywords: ['希望', '灵感', '宁静'], meaning: '星星代表着希望、灵感和宁静。它象征着在困难之后的平静和信心的恢复。', advice: '保持希望，相信你的梦想会实现。宁静和治愈正在到来。' },
+            { name: '月亮', emoji: '🌙', keywords: ['幻觉', '恐惧', '潜意识'], meaning: '月亮代表着潜意识的世界和内心的直觉。它暗示着事情可能不像表面看起来那样清晰。', advice: '相信你的直觉，但也要分辨真实与幻象。' },
+            { name: '太阳', emoji: '☀️', keywords: ['成功', '快乐', '活力'], meaning: '太阳代表着成功、快乐和活力。它象征着清晰的视野和生命的喜悦。', advice: '享受当下的快乐，你的努力得到了回报。' },
+            { name: '审判', emoji: '📯', keywords: ['重生', '觉醒', '评价'], meaning: '审判代表着重生和觉醒。它象征着从过去的经验中学习和成长的时刻。', advice: '反思过去，从中学习。一个新的阶段正在开始。' },
+            { name: '世界', emoji: '🌍', keywords: ['完成', '成就', '圆满'], meaning: '世界代表着完成、成就和圆满。它象征着旅程的结束和目标的实现。', advice: '庆祝你的成就，享受完成的感觉。新的循环即将开始。' }
+        ];
+        
+        let currentStep = 1;
+        let currentQuestion = '';
+        let drawnCard = null;
+        let isReversed = false;
+        
+        // 生成星空背景
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.opacity = Math.random() * 0.7 + 0.3;
+                const size = Math.random() * 2 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // 检查是否是每日一牌模式
+        function checkDailyCardMode() {
+            const isDaily = localStorage.getItem('dailyCardMode');
+            const dailyQuestion = localStorage.getItem('dailyCardQuestion');
+            
+            if (isDaily === 'true' && dailyQuestion) {
+                document.getElementById('questionInput').value = dailyQuestion;
+                document.getElementById('charCount').textContent = dailyQuestion.length + '/200字';
+                document.getElementById('nextBtn').disabled = false;
+                // 清除标记
+                localStorage.removeItem('dailyCardMode');
+            }
+        }
+        
+        // 问题输入监听
+        document.getElementById('questionInput').addEventListener('input', function() {
+            const value = this.value.trim();
+            const count = value.length;
+            document.getElementById('charCount').textContent = count + '/200字';
+            
+            if (count >= 5) {
+                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('errorMsg').classList.add('hidden');
+            } else {
+                document.getElementById('nextBtn').disabled = true;
+            }
+        });
+        
+        // 选择标签
+        function selectTag(btn, text) {
+            document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('questionInput').value = text;
+            document.getElementById('charCount').textContent = text.length + '/200字';
+            document.getElementById('nextBtn').disabled = false;
+        }
+        
+        // 进入步骤2
+        function goToStep2() {
+            const question = document.getElementById('questionInput').value.trim();
+            if (question.length < 5) {
+                document.getElementById('errorMsg').classList.remove('hidden');
+                return;
+            }
+            
+            currentQuestion = question;
+            currentStep = 2;
+            
+            // 更新步骤指示器
+            document.getElementById('step1-dot').classList.remove('active');
+            document.getElementById('step1-dot').classList.add('completed');
+            document.getElementById('step2-dot').classList.add('active');
+            document.getElementById('step2-text').classList.remove('text-gray-400');
+            document.getElementById('step2-text').classList.add('text-tarot-gold');
+            
+            // 切换页面
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+        }
+        
+        // 开始洗牌
+        function startShuffle() {
+            document.getElementById('preparePhase').classList.add('hidden');
+            document.getElementById('shufflePhase').classList.remove('hidden');
+            
+            // 3秒后进入切牌阶段
+            setTimeout(() => {
+                document.getElementById('shufflePhase').classList.add('hidden');
+                document.getElementById('cutPhase').classList.remove('hidden');
+                
+                // 初始化幽灵光标特效
+                const ghostCanvas = document.getElementById('ghostCursorCanvas');
+                if (ghostCanvas) {
+                    ghostCursorEffect = new GhostCursorEffect(ghostCanvas);
+                    ghostCursorEffect.start();
+                }
+                
+                // 初始化磁力吸附效果
+                initMagnetEffects();
+            }, 3000);
+        }
+        
+        // 反重力粒子特效类
+        class AntigravityEffect {
+            constructor(canvas, options = {}) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width = canvas.offsetWidth;
+                this.height = canvas.height = canvas.offsetHeight;
+                
+                // 配置参数
+                this.count = options.count || 300;
+                this.magnetRadius = options.magnetRadius || 6;
+                this.ringRadius = options.ringRadius || 7;
+                this.waveSpeed = options.waveSpeed || 0.4;
+                this.waveAmplitude = options.waveAmplitude || 1;
+                this.particleSize = options.particleSize || 1.5;
+                this.lerpSpeed = options.lerpSpeed || 0.05;
+                this.color = options.color || '#5227FF';
+                this.particleVariance = options.particleVariance || 1;
+                this.rotationSpeed = options.rotationSpeed || 0;
+                this.depthFactor = options.depthFactor || 1;
+                this.pulseSpeed = options.pulseSpeed || 3;
+                this.particleShape = options.particleShape || 'capsule';
+                this.fieldStrength = options.fieldStrength || 10;
+                this.autoAnimate = options.autoAnimate !== false;
+                
+                this.particles = [];
+                this.time = 0;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+                this.animationId = null;
+                
+                this.initParticles();
+                if (this.autoAnimate) {
+                    this.start();
+                }
+            }
+            
+            initParticles() {
+                this.particles = [];
+                for (let i = 0; i < this.count; i++) {
+                    const angle = (i / this.count) * Math.PI * 2;
+                    const variance = 1 + (Math.random() - 0.5) * this.particleVariance;
+                    this.particles.push({
+                        angle: angle,
+                        baseRadius: this.ringRadius * 20 * variance,
+                        currentRadius: this.ringRadius * 20 * variance,
+                        size: this.particleSize * (0.5 + Math.random() * 0.5),
+                        speed: 0.5 + Math.random() * 0.5,
+                        phase: Math.random() * Math.PI * 2,
+                        opacity: 0.3 + Math.random() * 0.7,
+                        x: 0,
+                        y: 0,
+                        targetX: 0,
+                        targetY: 0
+                    });
+                }
+            }
+            
+            update() {
+                this.time += this.waveSpeed * 0.02;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+                
+                const pulse = Math.sin(this.time * this.pulseSpeed) * 0.1 + 1;
+                
+                this.particles.forEach((particle, i) => {
+                    // 旋转角度
+                    particle.angle += this.rotationSpeed * 0.01;
+                    
+                    // 波动效果
+                    const wave = Math.sin(this.time + particle.phase) * this.waveAmplitude * 10;
+                    const targetRadius = particle.baseRadius * pulse + wave;
+                    
+                    // 向中心聚集的效果（反重力）
+                    const magnetEffect = Math.sin(this.time * 2 + i * 0.1) * this.magnetRadius * 5;
+                    const finalRadius = targetRadius - magnetEffect;
+                    
+                    // 平滑插值
+                    particle.currentRadius += (finalRadius - particle.currentRadius) * this.lerpSpeed;
+                    
+                    // 计算目标位置
+                    particle.targetX = this.centerX + Math.cos(particle.angle) * particle.currentRadius;
+                    particle.targetY = this.centerY + Math.sin(particle.angle) * particle.currentRadius * 0.6; // 椭圆效果
+                    
+                    // 深度效果
+                    const depth = Math.sin(this.time + i * 0.05) * this.depthFactor * 10;
+                    particle.targetX += depth;
+                    
+                    // 平滑移动
+                    particle.x += (particle.targetX - particle.x) * this.lerpSpeed;
+                    particle.y += (particle.targetY - particle.y) * this.lerpSpeed;
+                });
+            }
+            
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // 绘制粒子
+                this.particles.forEach(particle => {
+                    const alpha = particle.opacity * (0.5 + Math.sin(this.time + particle.phase) * 0.5);
+                    this.ctx.globalAlpha = alpha;
+                    this.ctx.fillStyle = this.color;
+                    
+                    this.ctx.beginPath();
+                    if (this.particleShape === 'capsule') {
+                        // 胶囊形状
+                        this.ctx.save();
+                        this.ctx.translate(particle.x, particle.y);
+                        this.ctx.rotate(particle.angle + Math.PI / 2);
+                        this.ctx.roundRect(-particle.size / 2, -particle.size * 2, particle.size, particle.size * 4, particle.size / 2);
+                        this.ctx.fill();
+                        this.ctx.restore();
+                    } else if (this.particleShape === 'circle') {
+                        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    } else {
+                        this.ctx.fillRect(particle.x - particle.size / 2, particle.y - particle.size / 2, particle.size, particle.size);
+                    }
+                });
+                
+                this.ctx.globalAlpha = 1;
+            }
+            
+            animate() {
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+            
+            start() {
+                if (!this.animationId) {
+                    this.animate();
+                }
+            }
+            
+            stop() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+            
+            resize() {
+                this.width = this.canvas.width = this.canvas.offsetWidth;
+                this.height = this.canvas.height = this.canvas.offsetHeight;
+            }
+        }
+        
+        // 全局变量存储特效实例
+        let antigravityEffect = null;
+        let ghostCursorEffect = null;
+        let magnetEffects = [];
+        
+        // 磁力吸附效果类
+        class MagnetEffect {
+            constructor(element, options = {}) {
+                this.wrapper = element;
+                this.inner = element.querySelector('.magnet-inner');
+                this.padding = options.padding || 100;
+                this.magnetStrength = options.magnetStrength || 2;
+                this.isActive = false;
+                this.position = { x: 0, y: 0 };
+                this.disabled = false;
+                
+                this.init();
+            }
+            
+            init() {
+                // 绑定鼠标移动事件
+                this.handleMouseMove = this.handleMouseMove.bind(this);
+                window.addEventListener('mousemove', this.handleMouseMove);
+            }
+            
+            handleMouseMove(e) {
+                if (this.disabled) {
+                    this.setPosition(0, 0);
+                    return;
+                }
+                
+                const rect = this.wrapper.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const distX = Math.abs(centerX - e.clientX);
+                const distY = Math.abs(centerY - e.clientY);
+                
+                // 检查鼠标是否在吸附范围内
+                if (distX < rect.width / 2 + this.padding && distY < rect.height / 2 + this.padding) {
+                    this.isActive = true;
+                    this.inner.classList.add('active');
+                    
+                    // 计算偏移量
+                    const offsetX = (e.clientX - centerX) / this.magnetStrength;
+                    const offsetY = (e.clientY - centerY) / this.magnetStrength;
+                    this.setPosition(offsetX, offsetY);
+                } else {
+                    this.isActive = false;
+                    this.inner.classList.remove('active');
+                    this.setPosition(0, 0);
+                }
+            }
+            
+            setPosition(x, y) {
+                this.position = { x, y };
+                if (this.inner) {
+                    this.inner.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                }
+            }
+            
+            disable() {
+                this.disabled = true;
+                this.setPosition(0, 0);
+            }
+            
+            enable() {
+                this.disabled = false;
+            }
+            
+            destroy() {
+                window.removeEventListener('mousemove', this.handleMouseMove);
+            }
+        }
+        
+        // 初始化磁力吸附效果
+        function initMagnetEffects() {
+            // 清理旧的实例
+            magnetEffects.forEach(magnet => magnet.destroy());
+            magnetEffects = [];
+            
+            // 创建新的实例
+            const magnetElements = document.querySelectorAll('.magnet-wrapper');
+            magnetElements.forEach(el => {
+                const padding = parseInt(el.dataset.padding) || 100;
+                const strength = parseInt(el.dataset.strength) || 2;
+                const magnet = new MagnetEffect(el, {
+                    padding: padding,
+                    magnetStrength: strength
+                });
+                magnetEffects.push(magnet);
+            });
+        }
+        
+        // 幽灵光标特效类
+        class GhostCursorEffect {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width = canvas.offsetWidth;
+                this.height = canvas.height = canvas.offsetHeight;
+                
+                this.particles = [];
+                this.mouseX = this.width / 2;
+                this.mouseY = this.height / 2;
+                this.targetX = this.mouseX;
+                this.targetY = this.mouseY;
+                this.animationId = null;
+                this.time = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                // 创建初始粒子
+                for (let i = 0; i < 20; i++) {
+                    this.addParticle(this.width / 2, this.height / 2, true);
+                }
+                
+                // 监听鼠标移动
+                this.canvas.parentElement.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.targetX = e.clientX - rect.left;
+                    this.targetY = e.clientY - rect.top;
+                });
+                
+                // 触摸设备支持
+                this.canvas.parentElement.addEventListener('touchmove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.targetX = e.touches[0].clientX - rect.left;
+                    this.targetY = e.touches[0].clientY - rect.top;
+                });
+            }
+            
+            addParticle(x, y, random = false) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 2;
+                this.particles.push({
+                    x: x + (random ? (Math.random() - 0.5) * 50 : 0),
+                    y: y + (random ? (Math.random() - 0.5) * 50 : 0),
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1,
+                    decay: 0.01 + Math.random() * 0.02,
+                    size: 3 + Math.random() * 4,
+                    color: `hsl(${260 + Math.random() * 60}, 80%, 60%)`
+                });
+            }
+            
+            update() {
+                this.time += 0.02;
+                
+                // 平滑跟随鼠标
+                this.mouseX += (this.targetX - this.mouseX) * 0.1;
+                this.mouseY += (this.targetY - this.mouseY) * 0.1;
+                
+                // 添加新粒子
+                if (Math.random() < 0.3) {
+                    this.addParticle(this.mouseX, this.mouseY);
+                }
+                
+                // 更新粒子
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= 0.98;
+                    p.vy *= 0.98;
+                    p.life -= p.decay;
+                    p.size *= 0.99;
+                    return p.life > 0;
+                });
+            }
+            
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // 绘制粒子
+                this.particles.forEach(p => {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = p.life * 0.6;
+                    
+                    // 发光效果
+                    const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+                    gradient.addColorStop(0, p.color);
+                    gradient.addColorStop(1, 'transparent');
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // 核心
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.restore();
+                });
+                
+                // 绘制中心光标
+                this.ctx.save();
+                this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.beginPath();
+                this.ctx.arc(this.mouseX, this.mouseY, 20 + Math.sin(this.time * 3) * 5, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // 十字准星
+                this.ctx.setLineDash([]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.mouseX - 10, this.mouseY);
+                this.ctx.lineTo(this.mouseX + 10, this.mouseY);
+                this.ctx.moveTo(this.mouseX, this.mouseY - 10);
+                this.ctx.lineTo(this.mouseX, this.mouseY + 10);
+                this.ctx.stroke();
+                this.ctx.restore();
+            }
+            
+            animate() {
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+            
+            start() {
+                if (!this.animationId) {
+                    this.animate();
+                }
+            }
+            
+            stop() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+        }
+        
+        // 切牌
+        function cutCards() {
+            // 停止幽灵光标特效
+            if (ghostCursorEffect) {
+                ghostCursorEffect.stop();
+                ghostCursorEffect = null;
+            }
+            
+            // 销毁磁力吸附效果
+            magnetEffects.forEach(magnet => magnet.destroy());
+            magnetEffects = [];
+            
+            document.getElementById('cutPhase').classList.add('hidden');
+            document.getElementById('drawPhase').classList.remove('hidden');
+            
+            // 初始化反重力粒子特效
+            const canvas = document.getElementById('antigravityCanvas');
+            if (canvas) {
+                antigravityEffect = new AntigravityEffect(canvas, {
+                    count: 300,
+                    magnetRadius: 6,
+                    ringRadius: 7,
+                    waveSpeed: 0.4,
+                    waveAmplitude: 1,
+                    particleSize: 1.5,
+                    lerpSpeed: 0.05,
+                    color: '#5227FF',
+                    autoAnimate: true,
+                    particleVariance: 1,
+                    rotationSpeed: 0,
+                    depthFactor: 1,
+                    pulseSpeed: 3,
+                    particleShape: 'capsule',
+                    fieldStrength: 10
+                });
+            }
+            
+            // 1.5秒后显示中央卡牌
+            setTimeout(() => {
+                const card = document.getElementById('particleCard');
+                if (card) {
+                    card.style.transform = 'translate(-50%, -50%) scale(1)';
+                }
+            }, 1500);
+            
+            // 3.5秒后进入翻牌阶段
+            setTimeout(() => {
+                // 停止粒子特效
+                if (antigravityEffect) {
+                    antigravityEffect.stop();
+                    antigravityEffect = null;
+                }
+                revealCard();
+            }, 3500);
+        }
+        
+        // 翻牌
+        function revealCard() {
+            // 随机抽取一张牌
+            drawnCard = tarotCards[Math.floor(Math.random() * tarotCards.length)];
+            // 50%概率逆位
+            isReversed = Math.random() < 0.5;
+            
+            document.getElementById('drawPhase').classList.add('hidden');
+            document.getElementById('revealPhase').classList.remove('hidden');
+            
+            // 设置卡牌内容
+            document.getElementById('cardEmoji').textContent = drawnCard.emoji;
+            document.getElementById('cardName').textContent = drawnCard.name;
+            document.getElementById('cardPosition').textContent = isReversed ? '逆位' : '正位';
+            document.getElementById('revealTitle').textContent = drawnCard.name + ' ' + (isReversed ? '逆位' : '正位');
+            document.getElementById('revealKeyword').textContent = drawnCard.keywords.join('、');
+            
+            // 翻牌动画
+            setTimeout(() => {
+                document.getElementById('revealedCard').classList.add('flipped');
+                if (isReversed) {
+                    document.getElementById('cardFront').classList.add('reversed');
+                }
+            }, 500);
+        }
+        
+        // 进入步骤3
+        function goToStep3() {
+            currentStep = 3;
+            
+            // 更新步骤指示器
+            document.getElementById('step2-dot').classList.remove('active');
+            document.getElementById('step2-dot').classList.add('completed');
+            document.getElementById('step3-dot').classList.add('active');
+            document.getElementById('step3-text').classList.remove('text-gray-400');
+            document.getElementById('step3-text').classList.add('text-tarot-gold');
+            
+            // 切换页面
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            
+            // 填充结果数据
+            fillResultData();
+        }
+        
+        // 填充结果数据
+        function fillResultData() {
+            const now = new Date();
+            const timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('resultQuestion').textContent = currentQuestion;
+            document.getElementById('resultTime').textContent = timeStr;
+            
+            document.getElementById('resultCardEmoji').textContent = drawnCard.emoji;
+            document.getElementById('resultCardName').textContent = drawnCard.name;
+            document.getElementById('resultCardPosition').textContent = isReversed ? '逆位' : '正位';
+            
+            if (isReversed) {
+                document.getElementById('resultCardFront').classList.add('reversed');
+            }
+            
+            // 生成解读内容
+            const positionText = isReversed ? '逆位' : '正位';
+            const overallText = generateOverallReading(drawnCard, isReversed);
+            document.getElementById('overallReading').textContent = overallText;
+            
+            // 填充详情
+            document.getElementById('detailEmoji').textContent = drawnCard.emoji;
+            document.getElementById('detailCardName').textContent = drawnCard.name;
+            document.getElementById('detailPosition').textContent = positionText;
+            
+            // 关键词
+            const keywordsContainer = document.getElementById('keywords');
+            keywordsContainer.innerHTML = '';
+            drawnCard.keywords.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'px-3 py-1 bg-tarot-gold/20 text-tarot-gold rounded-full text-sm';
+                span.textContent = keyword;
+                keywordsContainer.appendChild(span);
+            });
+            
+            document.getElementById('cardMeaning').textContent = drawnCard.meaning;
+            document.getElementById('cardAdvice').textContent = drawnCard.advice;
+        }
+        
+        // 生成整体解读
+        function generateOverallReading(card, reversed) {
+            const positionPrefix = reversed ? '逆位的' : '正位的';
+            const energyText = reversed ? '这种能量可能表现为阻碍或需要重新审视的方面' : '这种能量将为你带来积极的影响';
+            
+            return `${positionPrefix}${card.name}出现在你的占卜中，象征着${card.keywords.join('、')}。这张牌暗示着你当前的情况与这些主题密切相关。${energyText}。建议你${card.advice.replace('你', '')}`;
+        }
+        
+        // 切换卡牌详情
+        function toggleCardDetail() {
+            const content = document.getElementById('cardDetailContent');
+            const arrow = document.getElementById('detailArrow');
+            content.classList.toggle('expanded');
+            arrow.classList.toggle('rotate-180');
+        }
+        
+        // 重新占卜
+        function restartDivination() {
+            // 重置所有状态
+            currentStep = 1;
+            currentQuestion = '';
+            drawnCard = null;
+            isReversed = false;
+            
+            // 停止所有特效
+            if (ghostCursorEffect) {
+                ghostCursorEffect.stop();
+                ghostCursorEffect = null;
+            }
+            if (antigravityEffect) {
+                antigravityEffect.stop();
+                antigravityEffect = null;
+            }
+            // 销毁磁力吸附效果
+            magnetEffects.forEach(magnet => magnet.destroy());
+            magnetEffects = [];
+            
+            // 重置步骤指示器
+            document.getElementById('step1-dot').classList.add('active');
+            document.getElementById('step1-dot').classList.remove('completed');
+            document.getElementById('step2-dot').classList.remove('active', 'completed');
+            document.getElementById('step3-dot').classList.remove('active', 'completed');
+            document.getElementById('step2-text').classList.add('text-gray-400');
+            document.getElementById('step2-text').classList.remove('text-tarot-gold');
+            document.getElementById('step3-text').classList.add('text-gray-400');
+            document.getElementById('step3-text').classList.remove('text-tarot-gold');
+            
+            // 重置输入
+            document.getElementById('questionInput').value = '';
+            document.getElementById('charCount').textContent = '0/200字';
+            document.getElementById('nextBtn').disabled = true;
+            document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
+            
+            // 重置抽卡阶段
+            document.getElementById('preparePhase').classList.remove('hidden');
+            document.getElementById('shufflePhase').classList.add('hidden');
+            document.getElementById('cutPhase').classList.add('hidden');
+            document.getElementById('drawPhase').classList.add('hidden');
+            document.getElementById('revealPhase').classList.add('hidden');
+            document.getElementById('revealedCard').classList.remove('flipped');
+            document.getElementById('cardFront').classList.remove('reversed');
+            
+            // 切换页面
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        
+        // 保存结果
+        function saveResult() {
+            const history = JSON.parse(localStorage.getItem('divinationHistory') || '[]');
+            const record = {
+                question: currentQuestion,
+                cardName: drawnCard.name,
+                cardEmoji: drawnCard.emoji,
+                isReversed: isReversed,
+                spreadType: '单张牌',
+                timestamp: new Date().toISOString(),
+                keywords: drawnCard.keywords,
+                meaning: drawnCard.meaning,
+                advice: drawnCard.advice
+            };
+            
+            history.unshift(record);
+            // 最多保存50条
+            if (history.length > 50) {
+                history.pop();
+            }
+            
+            localStorage.setItem('divinationHistory', JSON.stringify(history));
+            
+            // 显示提示
+            const toast = document.getElementById('saveToast');
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2000);
+        }
+        
+        // 分享结果
+        function shareResult() {
+            const text = `我在星语塔罗抽到了【${drawnCard.name} ${isReversed ? '逆位' : '正位'}】\n问题：${currentQuestion}\n关键词：${drawnCard.keywords.join('、')}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '星语塔罗占卜结果',
+                    text: text
+                });
+            } else {
+                // 复制到剪贴板
+                navigator.clipboard.writeText(text).then(() => {
+                    const toast = document.getElementById('saveToast');
+                    toast.textContent = '已复制到剪贴板';
+                    toast.classList.remove('opacity-0');
+                    setTimeout(() => {
+                        toast.classList.add('opacity-0');
+                        toast.textContent = '已保存到历史记录';
+                    }, 2000);
+                });
+            }
+        }
+        
+        // 移动端菜单切换
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        });
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            checkDailyCardMode();
+        });
+    </script>
+</body>
+</html>
